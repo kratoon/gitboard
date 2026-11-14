@@ -21,6 +21,9 @@ database, and it must keep the flat layout (ADR-0003) and merge well across bran
 - Operation (registered per ADR-0002): `moveIssue(id, { status?, before?, after?, position? })`. CLI:
   `gitboard issue move <id> <status> [--before <id> | --after <id> | --top | --bottom]`. Without a position,
   a moved issue goes to the bottom of the target column. The UI drag-and-drop calls the same operation.
+- Moving a card to the position it already occupies writes nothing. Ordering is bookkeeping: a change to `rank`
+  alone never stamps `updatedAt`, so reordering (including ranking neighbours) does not mark issues as edited
+  (amended 2026-11-14).
 - `validate` does not require ranks. Duplicate ranks are legal and resolved by the tie-break.
 - Created issues get no `rank` and appear after ranked cards, ordered by priority and date.
 

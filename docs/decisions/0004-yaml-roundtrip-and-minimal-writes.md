@@ -21,6 +21,7 @@ watchers.
 - Optimistic concurrency: a write fails with `CONFLICT` if the file's hash or mtime changed since it was
   read.
 - `updatedAt` is kept, optional in the schema, and changes only when content actually changes (OQ-002, accepted).
+  A change to `rank` alone is board ordering, not an edit, so it never stamps `updatedAt` (amended 2026-11-14).
 
 ## Alternatives considered
 

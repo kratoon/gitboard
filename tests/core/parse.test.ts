@@ -181,3 +181,25 @@ describe('checklists', () => {
     expect(setChecklistItem(text, 2, true)).toBe('- [ ] a\r\n- [x] b\r\n');
   });
 });
+
+describe('updatedAt and board ordering', () => {
+  it('does not stamp updatedAt when only the rank changes', () => {
+    const p = split(sample);
+    const result = applyChanges(p, { fm: { rank: 'a0' } }, '2026-12-01T00:00:00.000Z');
+    expect(result.changed).toBe(true);
+    expect(result.text).toContain('rank: a0');
+    expect(result.text).not.toContain('updatedAt');
+
+    const again = applyChanges(split(result.text), { fm: { rank: 'a1' } }, '2026-12-02T00:00:00.000Z');
+    expect(again.text).toContain('rank: a1');
+    expect(again.text).not.toContain('updatedAt');
+  });
+
+  it('keeps an existing updatedAt untouched on a rank-only change, and stamps it for real edits', () => {
+    const withStamp = sample.replace('createdAt:', 'updatedAt: 2026-11-15T00:00:00Z\ncreatedAt:');
+    const ranked = applyChanges(split(withStamp), { fm: { rank: 'a0' } }, '2026-12-01T00:00:00.000Z');
+    expect(ranked.text).toContain('updatedAt: 2026-11-15T00:00:00Z');
+    const edited = applyChanges(split(withStamp), { fm: { rank: 'a0', status: 'done' } }, '2026-12-01T00:00:00.000Z');
+    expect(edited.text).toContain('updatedAt: 2026-12-01T00:00:00.000Z');
+  });
+});

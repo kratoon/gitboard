@@ -350,3 +350,56 @@ describe('board', () => {
     expect(board?.epics).toEqual([expect.objectContaining({ id: epic.id, progress: expect.objectContaining({ total: 1, done: 1 }) })]);
   });
 });
+
+describe('moves that change nothing', () => {
+  const state = async (root: string, ids: string[]) =>
+    Promise.all(ids.map(async (id) => (await readFile(issueFile(root, id), 'utf8'))));
+
+  it('write no files when the card is already in the requested position', async () => {
+    const { repo, root } = await makeRepo();
+    const a = await createIssue(repo, { title: 'a' });
+    const b = await createIssue(repo, { title: 'b' });
+    const c = await createIssue(repo, { title: 'c' });
+    const ids = [a.id, b.id, c.id];
+    const before = await state(root, ids);
+
+    // c is last and a is first in a column that was never reordered.
+    expect((await moveIssue(repo, { ref: c.id, position: 'bottom' })).reranked).toEqual([]);
+    await moveIssue(repo, { ref: a.id, position: 'top' });
+    await moveIssue(repo, { ref: b.id, before: c.id });
+    await moveIssue(repo, { ref: b.id, after: a.id });
+    await moveIssue(repo, { ref: a.id, before: a.id }).catch(() => undefined);
+    expect(await state(root, ids)).toEqual(before);
+
+    // After a real reorder, repeating the same drop is also a no-op.
+    await moveIssue(repo, { ref: c.id, position: 'top' });
+    const afterReorder = await state(root, ids);
+    await moveIssue(repo, { ref: c.id, position: 'top' });
+    await moveIssue(repo, { ref: a.id, after: c.id });
+    expect(await state(root, ids)).toEqual(afterReorder);
+  });
+
+  it('give neighbours a rank without touching their updatedAt, and never touch it for pure reordering', async () => {
+    const { repo, root } = await makeRepo();
+    const a = await createIssue(repo, { title: 'a' });
+    const b = await createIssue(repo, { title: 'b' });
+    const c = await createIssue(repo, { title: 'c' });
+    await moveIssue(repo, { ref: a.id, after: c.id }); // reorders: a goes to the bottom
+
+    for (const id of [a.id, b.id, c.id]) {
+      const text = await readFile(issueFile(root, id), 'utf8');
+      expect(text).toContain('rank:');
+      expect(text).not.toContain('updatedAt');
+    }
+    expect((await listIssues(repo)).map((i) => i.title)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('still stamps updatedAt on the moved card, and only on it, when its status changes', async () => {
+    const { repo, root } = await makeRepo();
+    const a = await createIssue(repo, { title: 'a' });
+    const b = await createIssue(repo, { title: 'b', status: 'done' });
+    await moveIssue(repo, { ref: a.id, status: 'done' });
+    expect(await readFile(issueFile(root, a.id), 'utf8')).toContain('updatedAt');
+    expect(await readFile(issueFile(root, b.id), 'utf8')).not.toContain('updatedAt');
+  });
+});

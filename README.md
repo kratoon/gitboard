@@ -133,7 +133,7 @@ Implement the authentication service.
 - `project` is required; `type` is `story` (default) or `epic`; `parent` (optional) is an epic id in the same
   project; `rank` (optional) orders cards within a column; unknown keys are preserved.
 - Updates edit only the changed keys (comments and formatting are kept), never rewrite unchanged files, and
-  stamp `updatedAt` only when something changed. Line endings (LF or CRLF) are preserved.
+  stamp `updatedAt` only when something changed (reordering cards changes `rank` only, never `updatedAt`). Line endings (LF or CRLF) are preserved.
 - Repository settings live in `.gitboard/config.json`:
 
 ```json

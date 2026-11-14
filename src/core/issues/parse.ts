@@ -90,8 +90,8 @@ export interface ApplyResult {
 }
 
 /**
- * Applies changes and stamps `updatedAt`, but only if something actually differs. When nothing would
- * change, the original text is returned untouched.
+ * Applies changes and stamps `updatedAt`, but only if something actually differs (and the difference is
+ * more than a `rank` change). When nothing would change, the original text is returned untouched.
  */
 export function applyChanges(parsed: ParsedFile, changes: FileChanges, updatedAt: string): ApplyResult {
   const doc = parseDocument(parsed.fm);
@@ -109,7 +109,10 @@ export function applyChanges(parsed: ParsedFile, changes: FileChanges, updatedAt
     if (value === undefined) doc.delete(key);
     else doc.set(key, value);
   }
-  doc.set('updatedAt', updatedAt);
+  // `rank` is board ordering, not an edit to the issue: reordering cards (including the bookkeeping that
+  // gives neighbouring cards a rank) must not change anyone's `updatedAt`.
+  const orderingOnly = !bodyChanged && !restChanged && diffs.every(([key]) => key === 'rank');
+  if (!orderingOnly) doc.set('updatedAt', updatedAt);
 
   let fm = doc.toString({ lineWidth: 0 }).replace(/\n$/, '');
   if (parsed.eol === '\r\n') fm = fm.replace(/\n/g, '\r\n');

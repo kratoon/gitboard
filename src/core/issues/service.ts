@@ -431,9 +431,8 @@ export async function moveIssue(repo: Repo, input: IssueMoveInput, ctx: ServiceC
     return { issue: toIssue(stored, snap.lengths), reranked: [] };
   }
 
-  const column = snap.issues
-    .filter((i) => i.fm.project === fm.project && i.fm.status === status && i.id !== stored.id)
-    .sort(compareIssues);
+  const inColumn = snap.issues.filter((i) => i.fm.project === fm.project && i.fm.status === status);
+  const column = inColumn.filter((i) => i.id !== stored.id).sort(compareIssues);
 
   let index = column.length; // default: bottom of the target column
   if (input.position === 'top') index = 0;
@@ -444,6 +443,11 @@ export async function moveIssue(repo: Repo, input: IssueMoveInput, ctx: ServiceC
       throw new GitboardError('INVALID_POSITION', `Issue ${anchor.id} is not in the "${status}" column of project ${fm.project}.`);
     }
     index = input.before !== undefined ? at : at + 1;
+  }
+
+  // Dropping a card where it already is must not touch any file.
+  if (!statusChanging && inColumn.sort(compareIssues).findIndex((i) => i.id === stored.id) === index) {
+    return { issue: toIssue(stored, snap.lengths), reranked: [] };
   }
 
   const placement = computePlacement(column, index);
