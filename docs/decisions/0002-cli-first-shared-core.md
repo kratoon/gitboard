@@ -37,3 +37,13 @@ without the server, and the server must not shell out to the CLI.
 - Core must stay free of I/O presentation concerns, which the lint rules enforce.
 - Generic `POST /ops/:name` is less "RESTful" but guarantees parity. Read routes may still get friendlier
   GET aliases over the same handlers.
+
+## Implementation notes
+
+- The operation registry is `src/core/operations.ts`; `executeOperation` is the single entry point used by the
+  CLI and the HTTP server. Tests verify that every operation has a CLI command (`tests/cli/cli.test.ts`) and
+  that CLI, HTTP and core produce identical results and files (`tests/parity.test.ts`).
+- One deliberate exception to "cli and server import nothing from each other": `src/cli/commands/start.ts`
+  imports the server, because `gitboard start` launches it. It only calls `startServer`. ESLint allows exactly
+  that file; every other CLI file and the whole server are forbidden from importing across (`eslint.config.js`).
+- Filesystem access in core is confined to `src/core/storage` by an ESLint rule (ADR-0012).
