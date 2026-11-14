@@ -1,0 +1,38 @@
+# ADR-0006: Manual card ordering with an optional `rank`
+
+- **Status:** Accepted (2026-11-14)
+- **Date:** 2026-11-14
+- **Related:** ADR-0002, ADR-0003, ADR-0011, OQ-001
+
+## Context
+
+Users want to hand-order cards within a column. Order must be stored in the issue files, since there is no
+database, and it must keep the flat layout (ADR-0003) and merge well across branches.
+
+## Decision
+
+- Add an optional `rank` string to issue frontmatter. It is a fractional index (lexicographically
+  sortable), for example `a0`, `a1`, `a0V`.
+- Within a column (the issues of one project with one status), order is: `rank` ascending, then cards without
+  a `rank` sorted by priority and `createdAt`, with ties broken by ID.
+- Reordering writes only the moved issue's file: its new `rank` goes between its neighbours' ranks.
+- Core owns rank computation (library or small in-house function), including rebalancing when keys grow too
+  long. Rebalancing is rare, is a single explicit operation, and touches only that column's files.
+- Operation (registered per ADR-0002): `moveIssue(id, { status?, before?, after?, position? })`. CLI:
+  `gitboard issue move <id> <status> [--before <id> | --after <id> | --top | --bottom]`. Without a position,
+  a moved issue goes to the bottom of the target column. The UI drag-and-drop calls the same operation.
+- `validate` does not require ranks. Duplicate ranks are legal and resolved by the tie-break.
+- Created issues get no `rank` and appear after ranked cards, ordered by priority and date.
+
+## Alternatives considered
+
+- **No stored order:** simplest, but no hand ordering.
+- **Board-level `order.json`:** one hot file that conflicts on nearly every merge.
+- **Integer positions:** moving one card renumbers many files.
+
+## Consequences
+
+- One extra optional field, backward compatible with existing files.
+- Merge conflicts occur only if the same card is reordered on two branches. Two different cards that end up
+  with the same rank are handled by the tie-break.
+- Agents can order issues through the CLI, so ordering stays CLI-first.

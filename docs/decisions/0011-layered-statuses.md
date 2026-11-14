@@ -1,0 +1,86 @@
+# ADR-0011: Layered status columns (built-in, repository, project)
+
+- **Status:** Accepted (2026-11-14)
+- **Date:** 2026-11-14
+- **Related:** ADR-0003, ADR-0009, ADR-0010, OQ-009, OQ-013
+
+## Context
+
+Board columns are the allowed issue statuses. A single repo-wide list does not fit every project. For
+example, an `ADR` project (OQ-013) needs `proposed / accepted / superseded / rejected`, while ordinary work
+uses `todo / in-progress / done`. We want sensible defaults with overrides at each level.
+
+## Decision
+
+Effective statuses for an issue are resolved by the **first layer that defines them**:
+
+1. **Project** (`projects[].columns` in `.gitboard/config.json`)
+2. **Repository** (`columns` in `.gitboard/config.json`)
+3. **Gitboard built-in default:** `todo`, `in-progress`, `done`
+
+- An override **replaces** the list from the layer below. It does not merge, so the result is always
+  predictable from one place.
+- A column is `{ "id": "in-progress", "name": "In Progress" }`. `id` is the stored status value and matches
+  `^[a-z0-9][a-z0-9-]*$`. `name` is the display label and is optional (defaults to a title-cased `id`).
+  Order in the array is board order.
+- Example:
+
+  ```json
+  {
+    "columns": [ { "id": "backlog" }, { "id": "doing" }, { "id": "done" } ],
+    "projects": [
+      { "key": "WEB", "name": "Website" },
+      { "key": "ADR", "name": "Decisions",
+        "columns": [ { "id": "proposed" }, { "id": "accepted" },
+                     { "id": "superseded" }, { "id": "rejected" } ] }
+    ]
+  }
+  ```
+
+  Here `WEB` inherits the repo columns, and `ADR` uses its own.
+- The resolver is a single core function, `getEffectiveColumns(repo, projectKey)`. The CLI, server and UI
+  all use it.
+
+**Validation rules**
+
+- An issue's `status` must be one of the effective columns of **its project**. Epics follow their project's
+  columns too.
+- Changing an issue's project is refused if its status does not exist in the target project's columns,
+  unless the caller passes a new `--status` in the same operation.
+- Editing a column list is refused if it would orphan issues that use a removed status, unless the caller
+  maps them to another status in the same operation (`--remap old=new`). `validate` reports any orphans that
+  appear anyway, for example after a merge.
+- Column ids must be unique within a list, and each list must have at least one column.
+- New issues default to the first column of the effective list.
+
+**Operations and CLI** (each is a registered operation, per ADR-0002)
+
+- `gitboard columns show [--project KEY]` shows the effective columns and the layer they came from.
+- `gitboard columns set --columns a,b,c [--project KEY] [--remap old=new]` sets an override at the repo
+  level or, with `--project`, at the project level.
+- `gitboard columns reset [--project KEY]` removes the override, so the layer below applies again.
+- `gitboard init --columns ...` sets the repo-level override. Without it, the built-in default applies and
+  `config.json` carries no `columns` key.
+
+**Board / UI**
+
+- The board always shows one project at a time, with that project's effective columns. The "all projects"
+  view groups by project (see ADR-0009). It does not mix statuses across different column sets.
+- A settings panel edits repo and project columns by calling the same operations.
+
+## Alternatives considered
+
+- **Merge instead of replace:** harder to reason about, and it cannot remove a built-in column.
+- **Global user-level defaults:** a fourth layer that makes behavior depend on the machine, which conflicts
+  with portable repos. Built-ins are fixed per Gitboard version.
+- **Free-form status strings with no list:** no board order and no typo protection.
+
+## Consequences
+
+- `config.json` changes at the repo and project level, and merges of column edits across branches may
+  conflict. `validate` detects the resulting orphans.
+- More validation paths than a single list. They live only in core and are covered by tests (resolution
+  order, orphan prevention, project moves).
+- The built-in default may change between Gitboard versions, so repos that care should set `columns`
+  explicitly. `init` offers to write them.
+- Satisfies the ADR-migration need in OQ-013 without special cases.

@@ -1,0 +1,39 @@
+# ADR-0002: CLI-first architecture with a single shared core
+
+- **Status:** Accepted (2026-11-14)
+- **Date:** 2026-11-14
+- **Related:** ADR-0001, ADR-0005
+
+## Context
+
+This is the most important constraint of the project: exactly one implementation of business logic,
+shared by the CLI, HTTP server and agents. Every UI operation needs a CLI equivalent, the CLI must work
+without the server, and the server must not shell out to the CLI.
+
+## Decision
+
+1. `src/core` is a pure TypeScript library: no printing, no `process.exit`, no HTTP types. It takes typed
+   input and returns JSON-serializable data or throws `GitboardError` with a stable `code`.
+2. `src/cli` and `src/server` import `core` and nothing from each other. `src/web` imports only the
+   web-safe `core/types` entry point (Zod schemas and inferred types), never Node modules.
+3. **Operation registry:** each operation is declared once in `core/operations.ts` as
+   `{ name, inputSchema, handler, readOnly }`. The server mounts every operation generically; each CLI
+   command binds flags to the same input schema. A test fails if a registered operation lacks a CLI command.
+4. **Error mapping:** a single table in core maps error codes to CLI exit codes and HTTP statuses.
+5. **Parity tests:** the same scenario runs through core, the CLI (subprocess), and the HTTP server
+   (in-process). On-disk results must be byte-identical and error codes identical.
+6. Agents use the CLI (`--json`) only. The skill contains no logic (see ADR-0007).
+
+## Alternatives considered
+
+- **Server as the only backend, CLI as an HTTP client:** violates "CLI works without the server".
+- **CLI shelling out from the server:** violates the no-process-dependency rule and adds latency and
+  injection risk.
+- **Hand-written REST routes plus hand-written CLI commands:** drift risk. The registry removes it.
+
+## Consequences
+
+- Adding a feature means adding one operation, then thin bindings.
+- Core must stay free of I/O presentation concerns, which the lint rules enforce.
+- Generic `POST /ops/:name` is less "RESTful" but guarantees parity. Read routes may still get friendlier
+  GET aliases over the same handlers.

@@ -1,0 +1,51 @@
+# ADR-0012: Git workflow for edits and hosting readiness
+
+- **Status:** Accepted (2026-11-14)
+- **Date:** 2026-11-14
+- **Related:** ADR-0003, ADR-0004, ADR-0005, ADR-0008, OQ-004, OQ-014, OQ-015
+
+## Context
+
+Edits come from the CLI, agents and the web UI. Users want to know how they interact with Git, branches and
+branch protection, and whether the design could later support hosting and multiple users.
+
+## Decision
+
+**Git workflow (MVP)**
+
+- All edits change files in the working tree of the currently checked-out branch.
+- Gitboard never commits, pushes, pulls, fetches or merges, and never writes to a remote. It therefore works
+  with branch protection. The user commits and merges `.gitboard/` changes like code.
+- Board state is per branch. This is accepted and documented in the README.
+- The UI header shows the current branch and an indicator for uncommitted changes under `.gitboard/`. Both
+  come from a read-only core function (`getGitStatus`) that runs `git` through `execFile` without a shell.
+- **Post-MVP, opt-in:** `gitboard commit` commits only `.gitboard/` on the current branch. It never pushes,
+  and it refuses to run on branches listed as protected in user-level config.
+- Never: automatic commits or pushes, and never anything that targets `main`.
+
+**Hosting readiness (not a goal for the MVP)**
+
+- The MVP is a personal, local application. Hosting and multi-user support are out of scope, and they would be
+  a separate project: authentication and per-repo authorization, a Git provider integration, non-local
+  storage, and writes that become commits or pull requests.
+- Constraints we keep now, at no extra cost:
+  1. All filesystem access lives in `core/storage` and nowhere else in core.
+  2. The web app reaches the backend only through a small `GitboardClient` interface with a single HTTP
+     implementation (accepted, OQ-004). It is about 30 lines and adds no further abstraction.
+  3. Core reads no ambient process state (cwd, env) outside the repo resolver.
+- No storage interface or user model is added until a hosted version is planned.
+- Multiple users already work through Git with local installs. Random IDs avoid creation conflicts, and
+  `config.json` and `rank` are the files that can still conflict.
+
+## Alternatives considered
+
+- **Auto-commit or auto-push edits:** conflicts with branch protection and surprises the user.
+- **Dedicated issues branch in a worktree:** gives shared board state independent of code branches, but is a
+  larger design. Revisit only if per-branch boards become a real problem.
+- **Build a storage abstraction now:** speculative, against the "no unnecessary abstractions" rule.
+
+## Consequences
+
+- Simple, predictable Git behavior, and compatible with PR-based workflows.
+- An issue created on a feature branch is not visible on `main` until merged.
+- A future hosted version needs real work, but nothing in the MVP blocks it.

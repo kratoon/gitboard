@@ -1,0 +1,34 @@
+# ADR-0008: User-level project registry and SSH clones
+
+> **Terminology note (ADR-0009):** "project" in this ADR means a registered Git *repository*. The CLI group is
+> `gitboard repo ...`. "Project" now means a key-identified issue group inside a repo.
+
+- **Status:** Accepted (2026-11-14)
+- **Date:** 2026-11-14
+- **Related:** ADR-0003, ADR-0005
+
+## Context
+
+Gitboard manages several repos, both local and remote (SSH). Machine-specific paths must not appear in
+Git-tracked files.
+
+## Decision
+
+- Registry at `$XDG_CONFIG_HOME/gitboard/projects.json` (default `~/.config/gitboard/`), outside any
+  managed repo. Entries: `id`, `name`, `path`, `source` (`local` | `remote`), `remoteUrl`.
+- Remote clones are placed under `~/.gitboard/repos/<name>-<hash>` using the system `git` and the user's
+  SSH setup. Gitboard never stores credentials.
+- Removing a project deletes only the registry entry, never the repository.
+- CLI resolves the project from `cwd` (nearest enclosing Git root with `.gitboard/`), or from `-p`.
+  An optional "default project" in user config covers use outside a repo (the CLI form of "switch").
+- No automatic pull/fetch/commit/push.
+
+## Alternatives considered
+
+- **Registry in each repo:** would embed absolute paths.
+- **Libgit2/isomorphic-git:** would not reuse the user's SSH config and agent.
+
+## Consequences
+
+- Moving a repo requires re-registering it.
+- Requires `git` on PATH. `project add` fails with a clear error otherwise.

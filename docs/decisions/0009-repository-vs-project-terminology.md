@@ -1,0 +1,80 @@
+# ADR-0009: Repository vs. project terminology and project keys
+
+- **Status:** Accepted (2026-11-14)
+- **Date:** 2026-11-14
+- **Related:** ADR-0003, ADR-0008, ADR-0010, OQ-006, OQ-007, OQ-008, OQ-009
+
+## Context
+
+Users need to group issues inside a repository, as Jira "projects" do. The word "project" was already used
+for a registered Git repository (`gitboard project add`, the registry in ADR-0008). Two meanings of one word
+would confuse humans, agents reading the skill, and the code.
+
+## Decision
+
+**Terminology**
+
+- **Repository (repo):** a Git repository registered with Gitboard. CLI: `gitboard repo add|list|remove`.
+  The user-level registry from ADR-0008 holds repositories.
+- **Project:** a named group of issues inside one repository, identified by a **key**. CLI:
+  `gitboard project create|list|update|delete`.
+- Wording in ADR-0003, ADR-0008, and the plan that uses "project" for a registered repo is read as
+  "repository" from now on.
+
+**Project keys**
+
+- Pattern: `^[A-Z][A-Z0-9]{1,9}$` (2 to 10 chars, uppercase), e.g. `AUTH`, `WEB2`.
+- Unique within a repository. Uniqueness is enforced by core on create and checked by `gitboard validate`.
+  Keys need not be unique across repositories.
+- Immutable in the MVP. The display `name` and `description` are editable.
+  Renaming a key would require rewriting every issue, so it is deferred.
+- Defined in `.gitboard/config.json`:
+
+  ```json
+  { "projects": [ { "key": "AUTH", "name": "Authentication", "description": "…" } ] }
+  ```
+
+- Issues reference a project in frontmatter with `project: AUTH`. Validation rejects an unknown key.
+- `project` is required on every issue (accepted, OQ-007). `gitboard init` creates a default project, named after
+  the repo or `MAIN`. `validate` flags issues without a project and suggests a fix.
+- Deleting a project is refused while issues reference it, unless the user reassigns them or passes an
+  explicit flag.
+
+**Issue identity is unchanged (ADR-0003)**
+
+- IDs remain random 12-hex, and files stay flat in `.gitboard/issues/<id>.md`.
+- Moving an issue between projects changes only its `project` field. ID and filename are untouched.
+- The key is not part of the ID, and no per-project counters are used, because counters conflict across
+  branches.
+- Reference format (accepted, OQ-008): the CLI accepts a bare short ID (`a3f91c2`), `KEY-shortid`
+  (`AUTH-a3f91c2`), or the full 12-hex ID. Output displays `KEY-<shortest unique prefix, min 7 chars>`. The
+  key is for display and filtering only, and the ID stays the identity. If the key in a reference disagrees
+  with the issue's actual project, core warns and resolves by ID.
+
+**Operations and surfaces** (per ADR-0002, each is a registered operation with a CLI command)
+
+- `createProject`, `listProjects`, `updateProject`, `deleteProject`.
+- `listIssues` gains a `project` filter, and `createIssue` takes `--project KEY`.
+- The board and the web UI filter by project, and there is also an "all projects" view.
+
+**Epics**
+
+Epics, which are groups within a project, are covered separately in
+[ADR-0010](0010-epics.md).
+
+## Alternatives considered
+
+- **Call the group "epic", "group" or "board":** avoids the collision but departs from the Jira vocabulary
+  the user named. "Epic" also implies a hierarchy.
+- **Keep "project" for repos and name the group something else:** keeps the plan's current CLI, but it
+  contradicts the Jira mapping.
+- **Key embedded in issue IDs (`AUTH-12`):** needs sequential counters, and is not branch-safe.
+- **Directory per project (`.gitboard/issues/AUTH/<id>.md`):** makes moves between projects rename files
+  and complicates ID lookup.
+
+## Consequences
+
+- One rename in the plan and CLI (`project` becomes `repo` for registry commands).
+- `config.json` becomes a merge point. Two branches may add the same key with different names, which
+  `validate` detects. Adding different keys merges cleanly.
+- The skill must explain both terms clearly to agents.

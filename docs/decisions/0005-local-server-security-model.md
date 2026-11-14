@@ -1,0 +1,33 @@
+# ADR-0005: Local HTTP server security model
+
+- **Status:** Accepted (2026-11-14)
+- **Date:** 2026-11-14
+- **Related:** ADR-0002
+
+## Context
+
+The server can modify local files and has no authentication. A malicious web page in the user's browser
+could attempt cross-origin requests or DNS rebinding against localhost.
+
+## Decision
+
+- Bind to `127.0.0.1` only.
+- Reject requests whose `Host` is not `localhost`, `127.0.0.1` or `[::1]` on the bound port (DNS rebinding).
+- Mutating routes require `Content-Type: application/json` and a same-origin `Origin`. No CORS headers.
+- API addresses projects by registry ID, never by path. Core resolves with `realpath` and confines access to
+  `<root>/.gitboard/issues`. It rejects symlinked issue files and IDs not matching `^[0-9a-f]{12}$`.
+- Git is invoked via `execFile` (no shell). Clones use `--`, reject URLs starting with `-` or not
+  `ssh://`/scp-style, and disable hooks (`core.hooksPath=/dev/null`).
+- Markdown is rendered with `react-markdown` + `rehype-sanitize`; links get `rel="noopener noreferrer"`.
+- Issue content is never executed.
+- Implemented with raw `node:http` (about 8 routes) to avoid framework dependencies.
+
+## Alternatives considered
+
+- **Random bearer token in the URL:** stronger but changes UX. Can be added later if needed.
+- **Express/Fastify:** unnecessary for the route count.
+
+## Consequences
+
+- Protection depends on Host and Origin checks being tested, so security tests are part of M3.
+- Running behind a reverse proxy or non-localhost hostname is deliberately unsupported.
