@@ -1,25 +1,10 @@
-import {
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  closestCorners,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState } from 'react';
 import type { Board as BoardData, BoardColumn, Issue } from '../core/types';
+import { useColumnDnd, type Placement } from './dnd';
 
-export interface Placement {
-  before?: string;
-  after?: string;
-  position?: 'top' | 'bottom';
-}
+export type { Placement } from './dnd';
 
 interface BoardProps {
   board: BoardData;
@@ -113,43 +98,11 @@ function Column({
 }
 
 export function Board({ board, visible, epicTitles, onOpen, onMove }: BoardProps) {
-  const [dragging, setDragging] = useState<Issue | null>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  const columnOf = (issueId: string): BoardColumn | undefined => board.columns.find((c) => c.issues.some((i) => i.id === issueId));
-
-  const handleStart = (event: DragStartEvent) => {
-    const id = String(event.active.id);
-    setDragging(columnOf(id)?.issues.find((i) => i.id === id) ?? null);
-  };
-
-  const handleEnd = (event: DragEndEvent) => {
-    setDragging(null);
-    const { active, over } = event;
-    if (!over) return;
-    const activeId = String(active.id);
-    const overId = String(over.id);
-    const from = columnOf(activeId);
-    if (!from) return;
-
-    if (overId.startsWith('col:')) {
-      onMove(activeId, overId.slice(4), { position: 'bottom' });
-      return;
-    }
-    const target = columnOf(overId);
-    if (!target || activeId === overId) return;
-    const list = visible ? target.issues.filter((i) => visible.has(i.id)) : target.issues;
-    const overIndex = list.findIndex((i) => i.id === overId);
-    const activeIndex = list.findIndex((i) => i.id === activeId);
-    const movingDown = target.id === from.id && activeIndex >= 0 && activeIndex < overIndex;
-    onMove(activeId, target.id, movingDown ? { after: overId } : { before: overId });
-  };
+  const dnd = useColumnDnd(board.columns, visible, onMove);
+  const { dragging } = dnd;
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleStart} onDragEnd={handleEnd} onDragCancel={() => setDragging(null)}>
+    <DndContext sensors={dnd.sensors} collisionDetection={closestCorners} onDragStart={dnd.onDragStart} onDragEnd={dnd.onDragEnd} onDragCancel={dnd.onDragCancel}>
       <div className="columns">
         {board.columns.map((column) => (
           <Column key={column.id} column={column} visible={visible} epicTitles={epicTitles} onOpen={onOpen} />

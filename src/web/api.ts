@@ -1,5 +1,6 @@
 /** Typed wrappers over the operation names. No logic: each function is one operation call. */
 import type {
+  Backlog,
   Board,
   ColumnsChangeResult,
   ColumnsInfo,
@@ -15,6 +16,8 @@ import type {
   MoveResult,
   ProjectInfo,
   RepoInfo,
+  ViewId,
+  ViewsInfo,
 } from '../core/types';
 import { createHttpClient, type GitboardClient } from './client';
 
@@ -31,6 +34,7 @@ export function createApi(client: GitboardClient) {
     initRepo: (repoId: string) => repo<{ root: string; projectKey?: string; created: boolean; registered: boolean }>(repoId, 'repo.init'),
 
     board: (repoId: string) => repo<Board[]>(repoId, 'board.get'),
+    backlog: (repoId: string, includeDone: boolean) => repo<Backlog[]>(repoId, 'backlog.get', { includeDone }),
     gitStatus: (repoId: string) => repo<GitStatus>(repoId, 'git.status'),
     listIssues: (repoId: string, filter: IssueListInput) => repo<Issue[]>(repoId, 'issue.list', filter),
     getIssue: (repoId: string, ref: string) => repo<IssueDetail>(repoId, 'issue.get', { ref }),
@@ -41,6 +45,9 @@ export function createApi(client: GitboardClient) {
     deleteIssue: (repoId: string, id: string, unlinkChildren?: boolean) => repo<DeleteResult>(repoId, 'issue.delete', { id, unlinkChildren }),
 
     createProject: (repoId: string, key: string, name: string) => repo<ProjectInfo>(repoId, 'project.create', { key, name }),
+    showViews: (repoId: string, project?: string) => repo<ViewsInfo>(repoId, 'views.show', { project }),
+    setViews: (repoId: string, views: ViewId[], project?: string) => repo<ViewsInfo>(repoId, 'views.set', { views, project }),
+    resetViews: (repoId: string, project?: string) => repo<ViewsInfo>(repoId, 'views.reset', { project }),
     showColumns: (repoId: string, project?: string) => repo<ColumnsInfo>(repoId, 'columns.show', { project }),
     setColumns: (repoId: string, columns: string[], project?: string, remap?: Record<string, string>) =>
       repo<ColumnsChangeResult>(repoId, 'columns.set', { columns, project, remap }),

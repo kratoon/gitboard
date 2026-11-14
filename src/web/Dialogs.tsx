@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import type { Board, ColumnsInfo, RepoInfo } from '../core/types';
+import type { Board, ColumnsInfo, RepoInfo, ViewId, ViewsInfo } from '../core/types';
 import { api } from './api';
 import { ApiError } from './client';
 
@@ -267,3 +267,86 @@ export function ColumnsDialog({ repoId, board, onClose, onSaved }: { repoId: str
     </Modal>
   );
 }
+
+/** Labels for every view the UI can render. `Record<ViewId, ...>` makes the compiler flag a missing one. */
+export const VIEW_LABELS: Record<ViewId, { label: string; hint: string }> = {
+  kanban: { label: 'Board', hint: 'Kanban columns with drag and drop' },
+  backlog: { label: 'Backlog', hint: 'Open work as an ordered list, grouped by status' },
+};
+const ALL_VIEWS = Object.keys(VIEW_LABELS) as ViewId[];
+
+export function ViewsDialog({ repoId, board, onClose, onSaved }: { repoId: string; board: Board; onClose: () => void; onSaved: () => void }) {
+  const project = board.project.key;
+  const [info, setInfo] = useState<ViewsInfo | null>(null);
+  const [enabled, setEnabled] = useState<ViewId[]>([]);
+  const [first, setFirst] = useState<ViewId | ''>('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void api.showViews(repoId, project).then((loaded) => {
+      setInfo(loaded);
+      setEnabled(loaded.views);
+      setFirst(loaded.views[0] ?? '');
+    }, (err: unknown) => setError(errorMessage(err)));
+  }, [repoId, project]);
+
+  const toggle = (id: ViewId) => {
+    const next = enabled.includes(id) ? enabled.filter((v) => v !== id) : ALL_VIEWS.filter((v) => v === id || enabled.includes(v));
+    setEnabled(next);
+    if (!next.includes(first as ViewId)) setFirst(next[0] ?? '');
+  };
+  // The first entry is the default view.
+  const ordered = first === '' ? enabled : [first, ...enabled.filter((v) => v !== first)];
+
+  const run = async (action: () => Promise<unknown>) => {
+    setError(null);
+    try {
+      await action();
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
+
+  return (
+    <Modal title={`Views for ${project}`} onClose={onClose}>
+      <p className="hint">
+        Currently from: <strong>{info?.source ?? '…'}</strong>. A project setting replaces the repository setting, which replaces the built-in default (all views).
+      </p>
+      <fieldset className="view-options">
+        {ALL_VIEWS.map((id) => (
+          <label key={id} className="check-row">
+            <input type="checkbox" checked={enabled.includes(id)} onChange={() => toggle(id)} />
+            <span>
+              <strong>{VIEW_LABELS[id].label}</strong>
+              <span className="muted small"> {VIEW_LABELS[id].hint}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <label>
+        Default view
+        <select value={first} onChange={(e) => setFirst(e.target.value as ViewId)} disabled={enabled.length === 0}>
+          {enabled.map((id) => (
+            <option key={id} value={id}>{VIEW_LABELS[id].label}</option>
+          ))}
+        </select>
+      </label>
+      {error && <p className="error">{error}</p>}
+      <div className="actions wrap">
+        <button type="button" onClick={onClose}>Cancel</button>
+        <button type="button" onClick={() => void run(() => api.resetViews(repoId, project))} disabled={info?.source !== 'project'}>
+          Reset project setting
+        </button>
+        <button type="button" disabled={enabled.length === 0} onClick={() => void run(() => api.setViews(repoId, ordered))}>
+          Save for whole repository
+        </button>
+        <button type="button" className="primary" disabled={enabled.length === 0} onClick={() => void run(() => api.setViews(repoId, ordered, project))}>
+          Save for {project}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+

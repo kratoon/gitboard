@@ -1,12 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Board as BoardData, GitStatus, RepoInfo } from '../core/types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Backlog as BacklogData, Board as BoardData, GitStatus, Issue, RepoInfo, ViewId } from '../core/types';
 import { api } from './api';
-import { Board, type Placement } from './Board';
-import { AddRepoDialog, ColumnsDialog, CreateIssueDialog, CreateProjectDialog, RemoveRepoDialog, errorMessage } from './Dialogs';
+import { Backlog, type IssuePatch } from './Backlog';
+import { Board } from './Board';
+import type { Placement } from './dnd';
+import {
+  AddRepoDialog,
+  ColumnsDialog,
+  CreateIssueDialog,
+  CreateProjectDialog,
+  RemoveRepoDialog,
+  VIEW_LABELS,
+  ViewsDialog,
+  errorMessage,
+} from './Dialogs';
 import { IssueDrawer } from './IssueDrawer';
-import { applyMove } from './optimistic';
+import { applyMove, moveInColumns } from './optimistic';
 
-type DialogName = 'repo' | 'remove' | 'issue' | 'project' | 'columns' | null;
+type DialogName = 'repo' | 'remove' | 'issue' | 'project' | 'columns' | 'views' | null;
 
 const store = {
   get: (key: string): string | null => {
@@ -37,6 +48,12 @@ export function App() {
   const [repos, setRepos] = useState<RepoInfo[] | null>(null);
   const [repoId, setRepoId] = useState<string | null>(() => store.get('gitboard.repo'));
   const [boards, setBoards] = useState<BoardData[] | null>(null);
+  const [backlogs, setBacklogs] = useState<BacklogData[] | null>(null);
+  const [includeDone, setIncludeDone] = useState(false);
+  const [viewChoice, setViewChoice] = useState<ViewId | null>(null);
+  // What the next reload should fetch, kept in refs so `reload` stays stable.
+  const wantBacklog = useRef(false);
+  const wantDone = useRef(false);
   const [git, setGit] = useState<GitStatus | null>(null);
   const [projectKey, setProjectKey] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -67,9 +84,14 @@ export function App() {
   const reload = useCallback(async () => {
     if (!repo || !ready) return;
     try {
-      const [board, status] = await Promise.all([api.board(repo.id), api.gitStatus(repo.id)]);
+      const [board, status, backlog] = await Promise.all([
+        api.board(repo.id),
+        api.gitStatus(repo.id),
+        wantBacklog.current ? api.backlog(repo.id, wantDone.current) : Promise.resolve(null),
+      ]);
       setBoards(board);
       setGit(status);
+      if (backlog) setBacklogs(backlog);
     } catch (error) {
       fail(error);
     }
@@ -82,6 +104,7 @@ export function App() {
   useEffect(() => {
     if (repo) store.set('gitboard.repo', repo.id);
     setBoards(null);
+    setBacklogs(null);
     setGit(null);
     setVisible(null);
     setOpenId(null);
@@ -106,6 +129,25 @@ export function App() {
   useEffect(() => {
     if (board && repo) store.set(`gitboard.project.${repo.id}`, board.project.key);
   }, [board?.project.key, repo?.id]);
+
+  // The server says which views a project offers (config per repo, overridable per project); the first
+  // one is the default. The user's last pick is remembered per project when it is still enabled.
+  const viewKey = repo && board ? `gitboard.view.${repo.id}.${board.project.key}` : null;
+  useEffect(() => {
+    setViewChoice(viewKey ? (store.get(viewKey) as ViewId | null) : null);
+  }, [viewKey]);
+  const enabledViews: ViewId[] = board?.views.views ?? ['kanban'];
+  const view: ViewId = viewChoice !== null && enabledViews.includes(viewChoice) ? viewChoice : (enabledViews[0] ?? 'kanban');
+  const chooseView = (next: ViewId) => {
+    setViewChoice(next);
+    if (viewKey) store.set(viewKey, next);
+  };
+  wantBacklog.current = view === 'backlog';
+  wantDone.current = includeDone;
+  useEffect(() => {
+    if (view === 'backlog') void reload();
+  }, [view, includeDone, reload]);
+  const backlog = backlogs?.find((b) => b.project.key === board?.project.key);
 
   const filtersActive = Object.values(filters).some((value) => value !== '');
   useEffect(() => {
@@ -137,10 +179,40 @@ export function App() {
   async function handleMove(id: string, status: string, placement: Placement) {
     if (!repo) return;
     setBoards((previous) => previous && applyMove(previous, id, status, placement));
+    setBacklogs((previous) => previous?.map((b) => ({ ...b, sections: moveInColumns(b.sections, id, status, placement) })) ?? null);
     try {
       await api.moveIssue(repo.id, { ref: id, status, ...placement });
     } catch (error) {
       fail(error);
+    } finally {
+      await reload();
+    }
+  }
+
+  // Inline edits in the backlog rows; `expectedHash` makes a stale row fail instead of overwriting.
+  async function handleUpdate(issue: Issue, patch: IssuePatch) {
+    if (!repo) return;
+    try {
+      await api.updateIssue(repo.id, {
+        ref: issue.id,
+        ...(patch.status !== undefined ? { status: patch.status } : {}),
+        ...(patch.priority !== undefined ? { priority: patch.priority as 'low' | null } : {}),
+        expectedHash: issue.hash,
+      });
+    } catch (error) {
+      fail(error);
+    } finally {
+      await reload();
+    }
+  }
+
+  async function handleQuickCreate(status: string, title: string) {
+    if (!repo || !board) return;
+    try {
+      await api.createIssue(repo.id, { title, project: board.project.key, status });
+    } catch (error) {
+      fail(error);
+      throw error; // keep what the user typed
     } finally {
       await reload();
     }
@@ -255,6 +327,15 @@ export function App() {
               ))}
               <button className="tab add" onClick={() => setDialog('project')} title="New project">＋</button>
             </nav>
+            {enabledViews.length > 1 && (
+              <div className="view-switch" role="tablist" aria-label="View">
+                {enabledViews.map((id) => (
+                  <button key={id} role="tab" aria-selected={id === view} className={`seg${id === view ? ' active' : ''}`} onClick={() => chooseView(id)}>
+                    {VIEW_LABELS[id].label}
+                  </button>
+                ))}
+              </div>
+            )}
             <span className="spacer" />
             <input
               className="search"
@@ -286,6 +367,7 @@ export function App() {
             <button onClick={() => setFilters(NO_FILTERS)} disabled={!filtersActive} title={filtersActive ? 'Clear search and filters' : 'No search or filters to clear'}>
               Clear
             </button>
+            <button onClick={() => setDialog('views')} disabled={!board} title="Choose which views this project offers">Views</button>
             <button onClick={() => setDialog('columns')} disabled={!board} title="Edit columns">Columns</button>
             <button className="primary" onClick={() => setDialog('issue')} disabled={!board}>New issue</button>
           </div>
@@ -300,7 +382,26 @@ export function App() {
           )}
           {board && (
             <div className="workspace">
-              <Board board={board} visible={visible} epicTitles={epicTitles} onOpen={setOpenId} onMove={(id, status, placement) => void handleMove(id, status, placement)} />
+              {view === 'backlog' ? (
+                backlog ? (
+                  <Backlog
+                    backlog={backlog}
+                    statuses={board.columns.map((c) => ({ id: c.id, name: c.name }))}
+                    visible={visible}
+                    epicTitles={epicTitles}
+                    includeDone={includeDone}
+                    onIncludeDone={setIncludeDone}
+                    onOpen={setOpenId}
+                    onMove={(id, status, placement) => void handleMove(id, status, placement)}
+                    onUpdate={(issue, patch) => void handleUpdate(issue, patch)}
+                    onCreate={handleQuickCreate}
+                  />
+                ) : (
+                  <p className="pad muted">Loading backlog…</p>
+                )
+              ) : (
+                <Board board={board} visible={visible} epicTitles={epicTitles} onOpen={setOpenId} onMove={(id, status, placement) => void handleMove(id, status, placement)} />
+              )}
               {showEpics ? (
                 <aside className="epics">
                 <header>
@@ -394,6 +495,9 @@ export function App() {
             void reload();
           }}
         />
+      )}
+      {dialog === 'views' && repo && board && (
+        <ViewsDialog repoId={repo.id} board={board} onClose={() => setDialog(null)} onSaved={() => void reload()} />
       )}
       {dialog === 'columns' && repo && board && (
         <ColumnsDialog repoId={repo.id} board={board} onClose={() => setDialog(null)} onSaved={() => void reload()} />
