@@ -1,0 +1,67 @@
+{
+  "name": "gitboard",
+  "version": "0.1.0",
+  "description": "Git-native, local-first Kanban task board. Issues are Markdown files in your repo, managed through a CLI, a local web UI and coding agents.",
+  "type": "module",
+  "bin": {
+    "gitboard": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "kanban",
+    "issues",
+    "markdown",
+    "git",
+    "cli",
+    "agents"
+  ],
+  "scripts": {
+    "build": "npm run build:node && npm run build:web",
+    "build:node": "tsup",
+    "build:web": "vite build",
+    "dev:web": "vite",
+    "dev:server": "tsx watch src/cli/bin.ts start --no-open",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check:package": "node scripts/check-package.mjs",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:package",
+    "verify:install": "node scripts/verify-install.mjs"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "commander": "^13.1.0",
+    "fractional-indexing": "^3.2.0",
+    "yaml": "^2.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "eslint": "^10.15.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "tsup": "^9.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}
