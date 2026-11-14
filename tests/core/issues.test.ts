@@ -403,3 +403,50 @@ describe('moves that change nothing', () => {
     expect(await readFile(issueFile(root, b.id), 'utf8')).not.toContain('updatedAt');
   });
 });
+
+describe('a plain status change does not rank anything', () => {
+  const texts = async (root: string, ids: string[]) => Promise.all(ids.map((id) => readFile(issueFile(root, id), 'utf8')));
+
+  it('changes only that issue, and the issue drops the rank it had in its old column', async () => {
+    const { repo, root } = await makeRepo();
+    const a = await createIssue(repo, { title: 'a' });
+    const b = await createIssue(repo, { title: 'b' });
+    const c = await createIssue(repo, { title: 'c', status: 'done' });
+    const d = await createIssue(repo, { title: 'd', status: 'done' });
+    await moveIssue(repo, { ref: a.id, position: 'bottom' }); // a is ranked now
+    expect(await readFile(issueFile(root, a.id), 'utf8')).toContain('rank:');
+
+    const others = [b.id, c.id, d.id];
+    const before = await texts(root, others);
+    const result = await moveIssue(repo, { ref: a.id, status: 'done' });
+
+    expect(result.reranked).toEqual([]);
+    expect(await texts(root, others)).toEqual(before); // no neighbour was touched
+    const moved = await readFile(issueFile(root, a.id), 'utf8');
+    expect(moved).toContain('status: done');
+    expect(moved).not.toContain('rank:');
+    expect(moved).toContain('updatedAt'); // it is a real edit of this issue
+    expect(result.issue.rank).toBeUndefined();
+  });
+
+  it('places the unranked card after the ranked ones, then by priority and creation time', async () => {
+    const { repo } = await makeRepo();
+    await createIssue(repo, { title: 'older medium', status: 'done' });
+    const ranked = await createIssue(repo, { title: 'ranked', status: 'done' });
+    await moveIssue(repo, { ref: ranked.id, position: 'top' }); // a real move, so it gets a rank
+    const urgent = await createIssue(repo, { title: 'urgent', priority: 'urgent' });
+    const plain = await createIssue(repo, { title: 'plain' });
+    await moveIssue(repo, { ref: plain.id, status: 'done' });
+    await moveIssue(repo, { ref: urgent.id, status: 'done' });
+    expect((await listIssues(repo, { status: 'done' })).map((i) => i.title)).toEqual(['ranked', 'urgent', 'older medium', 'plain']);
+  });
+
+  it('still ranks the card when a position is given', async () => {
+    const { repo, root } = await makeRepo();
+    const a = await createIssue(repo, { title: 'a' });
+    await createIssue(repo, { title: 'b', status: 'done' });
+    await moveIssue(repo, { ref: a.id, status: 'done', position: 'top' });
+    expect(await readFile(issueFile(root, a.id), 'utf8')).toContain('rank:');
+    expect((await listIssues(repo, { status: 'done' })).map((i) => i.title)).toEqual(['a', 'b']);
+  });
+});

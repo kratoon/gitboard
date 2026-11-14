@@ -359,3 +359,23 @@ describe('views and backlog', () => {
     expect((await runCli(['backlog', '--project', 'NOPE', '--json'], { cwd })).code).toBe(3);
   });
 });
+
+describe('issue move without a position', () => {
+  it('rewrites only the moved issue', async () => {
+    const { root } = await makeRepo();
+    const make = async (title: string, status?: string) =>
+      (await runCli(['issue', 'create', title, ...(status ? ['--status', status] : []), '--json'], { cwd: root })).json.data.id as string;
+    const a = await make('a');
+    await make('b');
+    await make('c', 'done');
+    await make('d', 'done');
+    const before = await snapshotTree(path.join(root, '.gitboard'));
+
+    const moved = await runCli(['issue', 'move', a, 'done', '--json'], { cwd: root });
+    expect(moved.code).toBe(0);
+    const after = await snapshotTree(path.join(root, '.gitboard'));
+    const changed = Object.keys(after).filter((file) => after[file] !== before[file]);
+    expect(changed).toEqual([`issues/${a}.md`]);
+    expect(after[`issues/${a}.md`]).not.toContain('rank:');
+  });
+});

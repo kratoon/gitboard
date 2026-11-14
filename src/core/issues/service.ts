@@ -462,6 +462,14 @@ export async function moveIssue(repo: Repo, input: IssueMoveInput, ctx: ServiceC
     return { issue: toIssue(stored, snap.lengths), reranked: [] };
   }
 
+  // A plain status change says nothing about order, so no card is ranked: the issue drops the rank it had in
+  // its old column and sorts among the unranked cards (by priority, then creation time). Only this issue's
+  // file changes. Any explicit position (--top, --bottom, --before, --after, or a drag in the UI) ranks it.
+  if (positions === 0) {
+    const result = await saveChanges(repo, stored, { fm: { status, rank: undefined } }, input.expectedHash);
+    return { issue: toIssue(result.stored, snap.lengths), reranked: [] };
+  }
+
   const inColumn = snap.issues.filter((i) => i.fm.project === fm.project && i.fm.status === status);
   const column = inColumn.filter((i) => i.id !== stored.id).sort(compareIssues);
 
