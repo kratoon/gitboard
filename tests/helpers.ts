@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import { afterEach, beforeEach } from 'vitest';
 import { main } from '../src/cli/program';
 import { resetRuntime, setRuntime } from '../src/core/runtime';
@@ -127,4 +128,32 @@ export async function snapshotTree(dir: string, prefix = ''): Promise<Record<str
     else result[rel] = await readFile(path.join(dir, entry.name), 'utf8');
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Config file helpers (the config is YAML by default but may be JSON, ADR-0016)
+// ---------------------------------------------------------------------------------------------
+
+/** Absolute path of the repo's config file, whichever format it uses. */
+export async function configFile(root: string): Promise<string> {
+  for (const name of ['config.yaml', 'config.yml', 'config.json']) {
+    const file = path.join(root, '.gitboard', name);
+    try {
+      await readFile(file);
+      return file;
+    } catch {
+      /* try the next one */
+    }
+  }
+  throw new Error(`no config file in ${root}`);
+}
+
+/** The parsed config. JSON is valid YAML, so one parser handles both formats. */
+export async function readConfigObject(root: string): Promise<any> {
+  return parseYaml(await readFile(await configFile(root), 'utf8'));
+}
+
+/** Overwrites the config file in place (as JSON text, which is also valid YAML). */
+export async function writeConfigObject(root: string, config: unknown): Promise<void> {
+  await writeFile(await configFile(root), JSON.stringify(config));
 }

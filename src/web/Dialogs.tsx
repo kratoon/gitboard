@@ -215,6 +215,7 @@ export function ColumnsDialog({ repoId, board, onClose, onSaved }: { repoId: str
   const project = board.project.key;
   const [info, setInfo] = useState<ColumnsInfo | null>(null);
   const [text, setText] = useState('');
+  const [doneText, setDoneText] = useState('');
   const [remap, setRemap] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -222,8 +223,15 @@ export function ColumnsDialog({ repoId, board, onClose, onSaved }: { repoId: str
     void api.showColumns(repoId, project).then((loaded) => {
       setInfo(loaded);
       setText(loaded.columns.map((c) => c.id).join(', '));
+      setDoneText(loaded.columns.filter((c) => c.done).map((c) => c.id).join(', '));
     }, (err: unknown) => setError(errorMessage(err)));
   }, [repoId, project]);
+
+  // Saving states every column's done flag explicitly, so what you see here is what is stored.
+  const columnObjects = () => {
+    const doneIds = csv(doneText);
+    return csv(text).map((id) => ({ id, done: doneIds.includes(id) }));
+  };
 
   const remapObject = (): Record<string, string> | undefined => {
     const pairs = csv(remap).map((pair) => pair.split('=').map((s) => s.trim()));
@@ -250,6 +258,11 @@ export function ColumnsDialog({ repoId, board, onClose, onSaved }: { repoId: str
         <input value={text} onChange={(e) => setText(e.target.value)} />
       </label>
       <label>
+        Done columns (comma separated, from the ids above)
+        <input value={doneText} onChange={(e) => setDoneText(e.target.value)} placeholder="done" />
+      </label>
+      <p className="hint">Done columns are hidden in the backlog (unless "Show done" is ticked) and count as finished in epic progress.</p>
+      <label>
         Move issues from removed columns (old=new, comma separated)
         <input value={remap} onChange={(e) => setRemap(e.target.value)} placeholder="in-progress=todo" />
       </label>
@@ -259,8 +272,8 @@ export function ColumnsDialog({ repoId, board, onClose, onSaved }: { repoId: str
         <button type="button" onClick={() => void run(() => api.resetColumns(repoId, project, remapObject()))} disabled={info?.source !== 'project'}>
           Reset project override
         </button>
-        <button type="button" onClick={() => void run(() => api.setColumns(repoId, csv(text), undefined, remapObject()))}>Save for whole repository</button>
-        <button type="button" className="primary" onClick={() => void run(() => api.setColumns(repoId, csv(text), project, remapObject()))}>
+        <button type="button" onClick={() => void run(() => api.setColumns(repoId, columnObjects(), undefined, remapObject()))}>Save for whole repository</button>
+        <button type="button" className="primary" onClick={() => void run(() => api.setColumns(repoId, columnObjects(), project, remapObject()))}>
           Save for {project}
         </button>
       </div>

@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { startServer, type RunningServer } from '../../src/server';
-import { makeRepo, tmpDir, useTestHome } from '../helpers';
+import { configFile, makeRepo, tmpDir, useTestHome } from '../helpers';
 
 useTestHome();
 
@@ -143,7 +143,7 @@ describe('security (ADR-0005)', () => {
     expect(list.body.data).toEqual([]);
     const ok = await request(server, 'POST', url, { body: { title: 'fine' }, headers: { Origin: `http://127.0.0.1:${server.port}`, 'Sec-Fetch-Site': 'same-origin' } });
     expect(ok.status).toBe(200);
-    expect(await readFile(path.join(root, '.gitboard', 'config.json'), 'utf8')).toContain('projects');
+    expect(await readFile(await configFile(root), 'utf8')).toContain('projects');
   });
 
   it('requires a JSON content type, so cross-origin form posts cannot write', async () => {

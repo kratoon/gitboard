@@ -31,6 +31,11 @@ export const ColumnSchema = z
   .object({
     id: z.string().regex(COLUMN_ID_PATTERN, 'must be lowercase letters, digits and dashes'),
     name: z.string().trim().min(1).optional(),
+    /**
+     * Marks a column as "done" (completed or closed work). If no column in a list sets this, the last
+     * column counts as done, as before (ADR-0015).
+     */
+    done: z.boolean().optional(),
   })
   .strict();
 export const ColumnsSchema = z
@@ -187,6 +192,7 @@ export const IssueCheckInput = z.object({
   checked: z.boolean().optional(),
   expectedHash: z.string().optional(),
 });
+export const ConfigConvertInput = z.object({ to: z.enum(['yaml', 'json']).optional() });
 export const BoardGetInput = z.object({ project: ProjectKeySchema.optional() });
 export const BacklogGetInput = z.object({
   project: ProjectKeySchema.optional(),
@@ -222,6 +228,7 @@ export type IssueUpdateInput = z.input<typeof IssueUpdateInput>;
 export type IssueMoveInput = z.input<typeof IssueMoveInput>;
 export type IssueDeleteInput = z.input<typeof IssueDeleteInput>;
 export type IssueCheckInput = z.input<typeof IssueCheckInput>;
+export type ConfigConvertInput = z.input<typeof ConfigConvertInput>;
 export type BoardGetInput = z.input<typeof BoardGetInput>;
 export type BacklogGetInput = z.input<typeof BacklogGetInput>;
 export type ViewsSetInput = z.input<typeof ViewsSetInput>;
@@ -234,12 +241,21 @@ export type ViewsResetInput = z.input<typeof ViewsResetInput>;
 export interface Column {
   id: string;
   name: string;
+  /** True for columns that hold finished work (ADR-0015). Always resolved, never undefined. */
+  done: boolean;
 }
 export type ColumnSource = 'project' | 'repo' | 'builtin';
 export interface ColumnsInfo {
   project?: string;
   columns: Column[];
   source: ColumnSource;
+}
+
+export interface ConfigConvertResult {
+  /** File names inside `.gitboard/`. Equal when the config already had the requested format. */
+  from: string;
+  to: string;
+  changed: boolean;
 }
 
 export interface ColumnsChangeResult extends ColumnsInfo {
@@ -277,7 +293,7 @@ export type IssueSummary = Pick<Issue, 'id' | 'ref' | 'title' | 'status' | 'proj
 
 export interface EpicProgress {
   total: number;
-  /** Children in the last column of the project's effective columns. */
+  /** Children in any of the project's done columns (ADR-0015). */
   done: number;
   byStatus: Record<string, number>;
 }
@@ -312,14 +328,14 @@ export interface Board {
   columns: BoardColumn[];
   epics: Array<IssueSummary & { progress: EpicProgress }>;
 }
-/** The project's open work as an ordered list, grouped by status (the last column is hidden unless asked for). */
+/** The project's open work as an ordered list, grouped by status (done columns are hidden unless asked for). */
 export interface Backlog {
   project: ProjectInfo;
   views: ViewsInfo;
   sections: BoardColumn[];
-  /** Id of the column treated as "done", or undefined when the project has only one column. */
-  doneStatus?: string;
-  /** Issues in the done column that were left out. */
+  /** Ids of the project's done columns, which are hidden unless asked for (ADR-0015). */
+  doneStatuses: string[];
+  /** Issues in the done columns that were left out. */
   hiddenCount: number;
   epics: Array<IssueSummary & { progress: EpicProgress }>;
 }

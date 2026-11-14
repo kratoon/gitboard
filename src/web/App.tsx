@@ -386,7 +386,7 @@ export function App() {
                 backlog ? (
                   <Backlog
                     backlog={backlog}
-                    statuses={board.columns.map((c) => ({ id: c.id, name: c.name }))}
+                    statuses={board.columns}
                     visible={visible}
                     epicTitles={epicTitles}
                     includeDone={includeDone}

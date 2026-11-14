@@ -81,6 +81,7 @@ function Column({
     <section className={`column${isOver ? ' over' : ''}`} aria-label={column.name}>
       <header className="column-header">
         <h3>{column.name}</h3>
+        {column.done && <span className="done-mark" title="Done column" aria-label="Done column">✓</span>}
         <span className="count" title={visible ? 'matching / total' : 'issues'}>
           {visible ? `${shown.length} / ${column.issues.length}` : column.issues.length}
         </span>

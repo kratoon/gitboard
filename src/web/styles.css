@@ -130,6 +130,8 @@ button.link:hover { text-decoration: underline; background: none; }
 .column.over { border-color: var(--accent); }
 .column-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 6px; }
 .column-header h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.done-mark { color: var(--accent); font-weight: 700; margin-right: auto; margin-left: 2px; }
+.bl-header .done-mark { margin-right: 0; margin-left: 0; }
 .count { background: var(--surface); border-radius: 999px; padding: 0 8px; font-size: 12px; color: var(--muted); }
 .cards { padding: 4px 8px 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 56px; }
 .empty-column { color: var(--muted); font-size: 12.5px; text-align: center; padding: 14px 0; border: 1px dashed var(--border); border-radius: 8px; }

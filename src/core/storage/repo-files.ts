@@ -38,17 +38,50 @@ export async function openRepo(root: string): Promise<Repo> {
   return { root: real };
 }
 
-export function configFilePath(repo: Repo): string {
-  return path.join(repo.root, GITBOARD_DIR, 'config.json');
+/** The repo config is YAML by default; JSON is also read and written (ADR-0016). */
+export const CONFIG_FILE_NAMES = ['config.yaml', 'config.yml', 'config.json'] as const;
+export const DEFAULT_CONFIG_FILE = 'config.yaml';
+export type ConfigFormat = 'yaml' | 'json';
+
+export interface ConfigFile extends FileContent {
+  /** File name inside `.gitboard/`. */
+  name: string;
+  format: ConfigFormat;
+}
+
+export function configFormatOf(name: string): ConfigFormat {
+  return name.endsWith('.json') ? 'json' : 'yaml';
+}
+
+const configPath = (repo: Repo, name: string) => path.join(repo.root, GITBOARD_DIR, name);
+
+export async function existingConfigNames(repo: Repo): Promise<string[]> {
+  const found: string[] = [];
+  for (const name of CONFIG_FILE_NAMES) {
+    try {
+      await lstat(configPath(repo, name));
+      found.push(name);
+    } catch {
+      /* not there */
+    }
+  }
+  return found;
 }
 
 export async function isInitialized(repo: Repo): Promise<boolean> {
-  try {
-    await stat(configFilePath(repo));
-    return true;
-  } catch {
-    return false;
+  return (await existingConfigNames(repo)).length > 0;
+}
+
+/** The single config file, or NOT_INITIALIZED, or INVALID_CONFIG when several formats exist side by side. */
+async function currentConfigName(repo: Repo): Promise<string> {
+  const names = await existingConfigNames(repo);
+  if (names.length === 0) {
+    throw new GitboardError('NOT_INITIALIZED', 'This repository is not initialised for Gitboard. Run `gitboard init`.');
   }
+  if (names.length > 1) {
+    throw new GitboardError('INVALID_CONFIG', `Found more than one config file in .gitboard/ (${names.join(', ')}). Keep exactly one.`);
+  }
+  return names[0] as string;
 }
 
 /** Walks up from `start` looking for `.gitboard/`, then for a `.git` entry (an uninitialised repo). */
@@ -198,12 +231,13 @@ export async function deleteIssueFile(repo: Repo, id: string, expectedHash?: str
   await rm(file);
 }
 
-export async function readConfigFile(repo: Repo): Promise<FileContent> {
-  const file = configFilePath(repo);
+export async function readConfigFile(repo: Repo): Promise<ConfigFile> {
+  const name = await currentConfigName(repo);
+  const file = configPath(repo, name);
   try {
     await assertNotSymlink(file);
     const buffer = await readFile(file);
-    return { text: buffer.toString('utf8'), hash: contentHash(buffer) };
+    return { name, format: configFormatOf(name), text: buffer.toString('utf8'), hash: contentHash(buffer) };
   } catch (error) {
     if (error instanceof GitboardError) throw error;
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -213,20 +247,41 @@ export async function readConfigFile(repo: Repo): Promise<FileContent> {
   }
 }
 
+/** Writes the config back to the file it came from (so the format never changes by accident). */
 export async function writeConfigFile(repo: Repo, text: string, expectedHash: string): Promise<void> {
   const current = await readConfigFile(repo);
   if (current.hash !== expectedHash) {
-    throw new GitboardError('CONFLICT', '.gitboard/config.json changed on disk since it was read. Try again.');
+    throw new GitboardError('CONFLICT', `.gitboard/${current.name} changed on disk since it was read. Try again.`);
   }
-  await atomicWriteFile(configFilePath(repo), text);
+  await atomicWriteFile(configPath(repo, current.name), text);
+}
+
+/**
+ * Switches the config to another file (and so another format): the new file is created first, then the
+ * old one removed, so an interruption never leaves the repository without a config.
+ */
+export async function replaceConfigFile(repo: Repo, newName: string, text: string, expectedHash: string): Promise<void> {
+  const current = await readConfigFile(repo);
+  if (current.hash !== expectedHash) {
+    throw new GitboardError('CONFLICT', `.gitboard/${current.name} changed on disk since it was read. Try again.`);
+  }
+  try {
+    await createFileExclusive(configPath(repo, newName), text);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      throw new GitboardError('INVALID_CONFIG', `.gitboard/${newName} already exists.`);
+    }
+    throw error;
+  }
+  await rm(configPath(repo, current.name));
 }
 
 /** Creates `.gitboard/` with its config, issues directory and line-ending rule. */
-export async function createGitboardFiles(repo: Repo, configText: string): Promise<void> {
+export async function createGitboardFiles(repo: Repo, configText: string, configName: string = DEFAULT_CONFIG_FILE): Promise<void> {
   const dir = path.join(repo.root, GITBOARD_DIR);
   const issues = path.join(dir, 'issues');
   await mkdir(issues, { recursive: true });
   await atomicWriteFile(path.join(dir, '.gitattributes'), '* text eol=lf\n');
   await atomicWriteFile(path.join(issues, '.gitkeep'), '');
-  await atomicWriteFile(configFilePath(repo), configText);
+  await atomicWriteFile(configPath(repo, configName), configText);
 }

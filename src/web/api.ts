@@ -49,7 +49,7 @@ export function createApi(client: GitboardClient) {
     setViews: (repoId: string, views: ViewId[], project?: string) => repo<ViewsInfo>(repoId, 'views.set', { views, project }),
     resetViews: (repoId: string, project?: string) => repo<ViewsInfo>(repoId, 'views.reset', { project }),
     showColumns: (repoId: string, project?: string) => repo<ColumnsInfo>(repoId, 'columns.show', { project }),
-    setColumns: (repoId: string, columns: string[], project?: string, remap?: Record<string, string>) =>
+    setColumns: (repoId: string, columns: Array<{ id: string; done: boolean }>, project?: string, remap?: Record<string, string>) =>
       repo<ColumnsChangeResult>(repoId, 'columns.set', { columns, project, remap }),
     resetColumns: (repoId: string, project?: string, remap?: Record<string, string>) =>
       repo<ColumnsChangeResult>(repoId, 'columns.reset', { project, remap }),

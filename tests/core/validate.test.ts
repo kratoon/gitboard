@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createIssue } from '../../src/core/issues/service';
 import { validateRepo } from '../../src/core/validation/validate';
-import { makeRepo, useTestHome } from '../helpers';
+import { configFile, makeRepo, readConfigObject, useTestHome, writeConfigObject } from '../helpers';
 
 useTestHome();
 
@@ -76,14 +76,15 @@ describe('validate', () => {
 
   it('flags duplicate project keys and invalid config', async () => {
     const { repo, root } = await makeRepo();
-    const configFile = path.join(root, '.gitboard', 'config.json');
-    const config = JSON.parse(await readFile(configFile, 'utf8'));
+    const config = await readConfigObject(root);
     config.projects.push({ key: 'SAMP', name: 'Again' });
-    await writeFile(configFile, JSON.stringify(config));
+    await writeConfigObject(root, config);
     expect(await codes(repo)).toEqual(['DUPLICATE_PROJECT_KEY']);
 
-    await writeFile(configFile, '{ not json');
-    expect(await codes(repo)).toEqual(['INVALID_CONFIG']);
+    await writeFile(await configFile(root), '{ not valid');
+    const result = await validateRepo(repo);
+    expect(result.problems.map((p) => p.code)).toEqual(['INVALID_CONFIG']);
+    expect(result.problems[0]?.file).toBe('.gitboard/config.yaml');
   });
 
   it('reports stray markdown files in the issues directory', async () => {

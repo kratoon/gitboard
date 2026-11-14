@@ -7,7 +7,7 @@ import { effectiveColumns } from '../projects/columns';
 import { loadConfig } from '../projects/config';
 import { isViewId } from '../projects/views';
 import { GitboardError } from '../errors';
-import type { Repo } from '../storage/repo-files';
+import { existingConfigNames, type Repo } from '../storage/repo-files';
 import { VIEW_IDS, type Problem, type ValidateResult } from '../types';
 
 const file = (id: string) => `.gitboard/issues/${id}.md`;
@@ -15,12 +15,13 @@ const file = (id: string) => `.gitboard/issues/${id}.md`;
 export async function validateRepo(repo: Repo): Promise<ValidateResult> {
   const problems: Problem[] = [];
 
+  const configFile = `.gitboard/${(await existingConfigNames(repo))[0] ?? 'config.yaml'}`;
   let config;
   try {
     config = (await loadConfig(repo)).config;
   } catch (error) {
     if (error instanceof GitboardError && error.code === 'INVALID_CONFIG') {
-      problems.push({ code: 'INVALID_CONFIG', file: '.gitboard/config.json', message: error.message });
+      problems.push({ code: 'INVALID_CONFIG', file: configFile, message: error.message });
       const { issues, problems: issueProblems } = await loadIssues(repo);
       return { ok: false, problems: [...problems, ...issueProblems], issueCount: issues.length };
     }
@@ -32,7 +33,7 @@ export async function validateRepo(repo: Repo): Promise<ValidateResult> {
     if (seen.has(project.key)) {
       problems.push({
         code: 'DUPLICATE_PROJECT_KEY',
-        file: '.gitboard/config.json',
+        file: configFile,
         message: `Project key ${project.key} is defined more than once.`,
       });
     }
@@ -44,7 +45,7 @@ export async function validateRepo(repo: Repo): Promise<ValidateResult> {
     if (unknown.length > 0) {
       problems.push({
         code: 'UNKNOWN_VIEW',
-        file: '.gitboard/config.json',
+        file: configFile,
         message: `${owner} lists unknown view(s): ${unknown.join(', ')}. Known views: ${VIEW_IDS.join(', ')}.`,
       });
     }
@@ -61,7 +62,7 @@ export async function validateRepo(repo: Repo): Promise<ValidateResult> {
     const where = { id: issue.id, file: file(issue.id) };
 
     if (!seen.has(fm.project)) {
-      problems.push({ code: 'UNKNOWN_PROJECT', ...where, message: `Project ${fm.project} is not defined in .gitboard/config.json.` });
+      problems.push({ code: 'UNKNOWN_PROJECT', ...where, message: `Project ${fm.project} is not defined in the config (${configFile}).` });
     } else {
       const columns = effectiveColumns(config, fm.project).columns.map((c) => c.id);
       if (!columns.includes(fm.status)) {

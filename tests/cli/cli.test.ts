@@ -348,13 +348,13 @@ describe('views and backlog', () => {
     expect(text.out).toContain('Open task');
     expect(text.out).toContain('[high]');
     expect(text.out).not.toContain('Finished task');
-    expect(text.out).toContain('1 issue(s) in "done" hidden. Use --all');
+    expect(text.out).toContain('1 issue(s) in done column(s) (done) hidden. Use --all');
 
     const all = await runCli(['backlog', '--all'], { cwd });
     expect(all.out).toContain('Finished task');
 
     const json = await runCli(['backlog', '--json'], { cwd });
-    expect(json.json.data[0]).toMatchObject({ doneStatus: 'done', hiddenCount: 1 });
+    expect(json.json.data[0]).toMatchObject({ doneStatuses: ['done'], hiddenCount: 1 });
     expect(json.json.data[0].sections.map((s: { id: string }) => s.id)).toEqual(['todo', 'in-progress']);
     expect((await runCli(['backlog', '--project', 'NOPE', '--json'], { cwd })).code).toBe(3);
   });

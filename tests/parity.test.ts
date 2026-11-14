@@ -62,6 +62,14 @@ const scenario: Step[] = [
   { op: 'views.set', input: { views: ['timeline'] }, argv: ['views', 'set', '--views', 'timeline'] },
   { op: 'views.reset', input: { project: 'ADR' }, argv: ['views', 'reset', '--project', 'ADR'] },
   { op: 'views.reset', input: {}, argv: ['views', 'reset'] },
+  { op: 'columns.set', input: { columns: [{ id: 'todo', done: false }, { id: 'in-progress', done: false }, { id: 'shipped', done: true }, { id: 'dropped', done: true }] }, argv: ['columns', 'set', '--columns', 'todo,in-progress,shipped,dropped', '--done', 'shipped,dropped'] },
+  { op: 'columns.set', input: { columns: ['todo'], project: 'ADR' }, argv: ['columns', 'set', '--columns', 'todo', '--project', 'ADR'] },
+  { op: 'columns.show', input: {}, argv: ['columns', 'show'] },
+  { op: 'backlog.get', input: { project: 'PAR' }, argv: ['backlog', '--project', 'PAR'] },
+  { op: 'config.convert', input: { to: 'json' }, argv: ['config', 'convert', '--to', 'json'] },
+  { op: 'issue.list', input: { project: 'PAR' }, argv: ['issue', 'list', '--project', 'PAR'] },
+  { op: 'config.convert', input: { to: 'json' }, argv: ['config', 'convert', '--to', 'json'] },
+  { op: 'config.convert', input: {}, argv: ['config', 'convert'] },
   { op: 'validate', input: {}, argv: ['validate'] },
 ];
 

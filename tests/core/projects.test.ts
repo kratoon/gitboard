@@ -14,7 +14,7 @@ import {
   updateProject,
 } from '../../src/core/projects/config';
 import { validateRepo } from '../../src/core/validation/validate';
-import { makeRepo, useTestHome } from '../helpers';
+import { configFile, makeRepo, readConfigObject, useTestHome } from '../helpers';
 
 useTestHome();
 
@@ -23,15 +23,16 @@ describe('init', () => {
     const { root } = await makeRepo({ init: false, name: 'my-cool-app' });
     const result = await initRepo(root);
     expect(result.projectKey).toBe('MCA');
-    const config = JSON.parse(await readFile(path.join(root, '.gitboard', 'config.json'), 'utf8'));
-    expect(config).toEqual({ version: 1, projects: [{ key: 'MCA', name: 'my-cool-app' }] });
+    expect(await configFile(root)).toBe(path.join(root, '.gitboard', 'config.yaml')); // YAML is the default (ADR-0016)
+    expect(await readConfigObject(root)).toEqual({ version: 1, projects: [{ key: 'MCA', name: 'my-cool-app' }] });
+    expect(await readFile(await configFile(root), 'utf8')).toBe('version: 1\nprojects:\n  - key: MCA\n    name: my-cool-app\n');
     expect(await readFile(path.join(root, '.gitboard', '.gitattributes'), 'utf8')).toBe('* text eol=lf\n');
     await expect(initRepo(root)).rejects.toMatchObject({ code: 'ALREADY_INITIALIZED' });
   });
 
   it('never stores absolute paths in the committed config', async () => {
     const { root } = await makeRepo();
-    const text = await readFile(path.join(root, '.gitboard', 'config.json'), 'utf8');
+    const text = await readFile(await configFile(root), 'utf8');
     expect(text).not.toContain(root);
   });
 
@@ -85,7 +86,10 @@ describe('layered columns', () => {
     await setColumns(repo, { project: 'ADR', columns: [{ id: 'proposed' }, { id: 'accepted', name: 'Accepted!' }] });
     const adr = await showColumns(repo, 'ADR');
     expect(adr.source).toBe('project');
-    expect(adr.columns).toEqual([{ id: 'proposed', name: 'Proposed' }, { id: 'accepted', name: 'Accepted!' }]);
+    expect(adr.columns).toEqual([
+      { id: 'proposed', name: 'Proposed', done: false },
+      { id: 'accepted', name: 'Accepted!', done: true }, // nothing says otherwise, so the last column is done
+    ]);
     expect((await showColumns(repo, 'SAMP')).source).toBe('repo');
 
     await resetColumns(repo, { project: 'ADR' });

@@ -6,12 +6,10 @@ import { createIssue, getBacklog, getBoard, moveIssue } from '../../src/core/iss
 import { createProject, setColumns } from '../../src/core/projects/config';
 import { effectiveViews, resetViews, setViews, showViews } from '../../src/core/projects/views';
 import { validateRepo } from '../../src/core/validation/validate';
-import { makeRepo, useTestHome } from '../helpers';
+import { configFile, makeRepo, readConfigObject, useTestHome, writeConfigObject } from '../helpers';
 
 useTestHome();
 
-const configPath = (root: string) => path.join(root, '.gitboard', 'config.json');
-const readConfig = async (root: string) => JSON.parse(await readFile(configPath(root), 'utf8'));
 
 describe('enabled views are layered like columns (ADR-0014)', () => {
   it('defaults to every view, then repository, then project', async () => {
@@ -40,14 +38,14 @@ describe('enabled views are layered like columns (ADR-0014)', () => {
 
   it('stores the setting in the committed config and resetting restores the original file', async () => {
     const { repo, root } = await makeRepo();
-    const original = await readFile(configPath(root), 'utf8');
+    const original = await readFile(await configFile(root), 'utf8');
     await setViews(repo, { views: ['kanban'], project: 'SAMP' });
-    expect((await readConfig(root)).projects[0].views).toEqual(['kanban']);
+    expect((await readConfigObject(root)).projects[0].views).toEqual(['kanban']);
     await setViews(repo, { views: ['backlog'] });
-    expect((await readConfig(root)).views).toEqual(['backlog']);
+    expect((await readConfigObject(root)).views).toEqual(['backlog']);
     await resetViews(repo, { project: 'SAMP' });
     await resetViews(repo, {});
-    expect(await readFile(configPath(root), 'utf8')).toBe(original);
+    expect(await readFile(await configFile(root), 'utf8')).toBe(original);
   });
 
   it('rejects unknown, duplicate and empty lists and unknown projects', async () => {
@@ -62,17 +60,17 @@ describe('enabled views are layered like columns (ADR-0014)', () => {
 
   it('ignores unknown ids found in a hand-edited config, and validate reports them', async () => {
     const { repo, root } = await makeRepo();
-    const config = await readConfig(root);
+    const config = await readConfigObject(root);
     config.views = ['timeline', 'backlog'];
     config.projects[0].views = ['calendar'];
-    await writeFile(configPath(root), JSON.stringify(config));
+    await writeConfigObject(root, config);
 
     // A project list with no known view is skipped; the repo list keeps only what this version knows.
     expect(await showViews(repo, 'SAMP')).toMatchObject({ views: ['backlog'], source: 'repo' });
     config.views = ['timeline'];
     expect(effectiveViews(config, 'SAMP')).toMatchObject({ views: ['kanban', 'backlog'], source: 'builtin' });
 
-    await writeFile(configPath(root), JSON.stringify({ ...config, views: ['timeline', 'backlog'] }));
+    await writeConfigObject(root, { ...config, views: ['timeline', 'backlog'] });
     const result = await validateRepo(repo);
     expect(result.problems.map((p) => p.code)).toEqual(['UNKNOWN_VIEW', 'UNKNOWN_VIEW']);
     expect(result.problems[0]?.message).toMatch(/timeline/);
@@ -104,7 +102,7 @@ describe('backlog data', () => {
     const [backlog] = await getBacklog(repo);
     expect(backlog?.sections.map((s) => s.id)).toEqual(['todo', 'in-progress']);
     expect(titles(backlog?.sections ?? [])).toEqual([['a', 'b'], ['wip']]);
-    expect(backlog).toMatchObject({ doneStatus: 'done', hiddenCount: 2 });
+    expect(backlog).toMatchObject({ doneStatuses: ['done'], hiddenCount: 2 });
 
     const [all] = await getBacklog(repo, { includeDone: true });
     expect(all?.sections.map((s) => s.id)).toEqual(['todo', 'in-progress', 'done']);
@@ -134,7 +132,7 @@ describe('backlog data', () => {
     await createIssue(repo, { title: 'old', project: 'ADR', status: 'superseded' });
     const [backlog] = await getBacklog(repo, { project: 'ADR' });
     expect(backlog?.sections.map((s) => s.id)).toEqual(['proposed', 'accepted']);
-    expect(backlog).toMatchObject({ doneStatus: 'superseded', hiddenCount: 1 });
+    expect(backlog).toMatchObject({ doneStatuses: ['superseded'], hiddenCount: 1 });
   });
 
   it('hides nothing when a project has a single column', async () => {
@@ -143,7 +141,7 @@ describe('backlog data', () => {
     await createIssue(repo, { title: 'only' });
     const [backlog] = await getBacklog(repo);
     expect(backlog?.sections.map((s) => s.id)).toEqual(['open']);
-    expect(backlog?.doneStatus).toBeUndefined();
+    expect(backlog?.doneStatuses).toEqual([]);
     expect(backlog?.hiddenCount).toBe(0);
   });
 

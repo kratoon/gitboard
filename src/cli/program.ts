@@ -40,6 +40,20 @@ function parseRemap(pairs: string[] | undefined): Record<string, string> | undef
   return map;
 }
 
+/**
+ * Builds the column list for init / project create / columns set from `--columns` and `--done`.
+ * Without `--done` the columns stay plain ids (done-ness is left as it is); with it, every column states
+ * explicitly whether it is done.
+ */
+function columnsFrom(ids: string[] | undefined, done: string[] | undefined): Array<string | { id: string; done: boolean }> | undefined {
+  if (ids === undefined || done === undefined) return ids;
+  const unknown = done.filter((id) => !ids.includes(id));
+  if (unknown.length > 0) {
+    throw new GitboardError('INVALID_INPUT', `--done lists ${unknown.join(', ')}, which ${unknown.length > 1 ? 'are' : 'is'} not in --columns.`);
+  }
+  return ids.map((id) => ({ id, done: done.includes(id) }));
+}
+
 export function buildProgram(io: CliIo, state: CliState): Command {
   const program = new Command();
   program
@@ -97,10 +111,11 @@ export function buildProgram(io: CliIo, state: CliState): Command {
     .command('init')
     .description('Initialise Gitboard in the current repository')
     .option('--columns <ids>', 'repository columns, comma separated (default: todo,in-progress,done)', collect)
+    .option('--done <ids>', 'which of --columns are done columns, comma separated (default: the last one)', collect)
     .option('--project-key <KEY>', 'key of the default project')
     .option('--project-name <name>', 'name of the default project')
     .action(async (opts, cmd: Command) => {
-      await run(cmd, 'repo.init', { columns: opts.columns, projectKey: opts.projectKey, projectName: opts.projectName }, (d: { root: string; projectKey?: string; created: boolean; registered: boolean }) =>
+      await run(cmd, 'repo.init', { columns: columnsFrom(opts.columns, opts.done), projectKey: opts.projectKey, projectName: opts.projectName }, (d: { root: string; projectKey?: string; created: boolean; registered: boolean }) =>
         [
           d.created
             ? `Initialised Gitboard in ${d.root} with default project ${d.projectKey}.`
@@ -144,8 +159,9 @@ export function buildProgram(io: CliIo, state: CliState): Command {
     .option('--name <name>', 'display name (default: the key)')
     .option('--description <text>', 'description')
     .option('--columns <ids>', 'override the repository columns for this project, comma separated', collect)
+    .option('--done <ids>', 'which of --columns are done columns, comma separated (default: the last one)', collect)
     .action(async (key: string, opts, cmd: Command) => {
-      await run(cmd, 'project.create', { key, name: opts.name ?? key, description: opts.description, columns: opts.columns }, (d: { key: string; name: string }) => `Created project ${d.key} (${d.name}).`);
+      await run(cmd, 'project.create', { key, name: opts.name ?? key, description: opts.description, columns: columnsFrom(opts.columns, opts.done) }, (d: { key: string; name: string }) => `Created project ${d.key} (${d.name}).`);
     });
   project.command('list').description('List projects').action(async (_opts, cmd: Command) => {
     await run(cmd, 'project.list', {}, fmt.renderProjects);
@@ -176,10 +192,11 @@ export function buildProgram(io: CliIo, state: CliState): Command {
     .command('set')
     .description('Override columns for the repository, or for one project with --project')
     .requiredOption('--columns <ids>', 'comma-separated column ids, in board order', collect)
+    .option('--done <ids>', 'which of --columns are done columns, comma separated (default: unchanged for existing columns)', collect)
     .option('--project <KEY>')
     .option('--remap <old=new...>', 'move issues from a removed status to another (repeatable)', collect)
     .action(async (opts, cmd: Command) => {
-      await run(cmd, 'columns.set', { columns: opts.columns, project: opts.project, remap: parseRemap(opts.remap) }, fmt.renderColumnsChange);
+      await run(cmd, 'columns.set', { columns: columnsFrom(opts.columns, opts.done), project: opts.project, remap: parseRemap(opts.remap) }, fmt.renderColumnsChange);
     });
   columns
     .command('reset')
@@ -188,6 +205,19 @@ export function buildProgram(io: CliIo, state: CliState): Command {
     .option('--remap <old=new...>', 'move issues from a removed status to another (repeatable)', collect)
     .action(async (opts, cmd: Command) => {
       await run(cmd, 'columns.reset', { project: opts.project, remap: parseRemap(opts.remap) }, fmt.renderColumnsChange);
+    });
+
+  // --- config --------------------------------------------------------------------------------
+  const config = program.command('config').description('Manage the repository config file');
+  config
+    .command('convert')
+    .description('Convert .gitboard/config between YAML (default) and JSON')
+    .option('--to <format>', 'yaml (default) or json')
+    .action(async (opts, cmd: Command) => {
+      await run(cmd, 'config.convert', { to: opts.to }, (d: { from: string; to: string; changed: boolean }) =>
+        d.changed
+          ? `Converted .gitboard/${d.from} to .gitboard/${d.to}.${d.to.endsWith('.json') ? ' (YAML comments are not kept in JSON.)' : ''}`
+          : `.gitboard/${d.from} already uses that format; nothing changed.`);
     });
 
   // --- views ---------------------------------------------------------------------------------

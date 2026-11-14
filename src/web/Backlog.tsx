@@ -179,6 +179,7 @@ function Section({
       <header className="bl-header" onClick={onToggle} role="button" tabIndex={0} aria-expanded={!collapsed} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggle()}>
         <span className="chevron" aria-hidden="true">{collapsed ? '▸' : '▾'}</span>
         <h3>{section.name}</h3>
+        {section.done && <span className="done-mark" title="Done column" aria-label="Done column">✓</span>}
         <span className="count">{visible ? `${shown.length} / ${section.issues.length}` : section.issues.length}</span>
       </header>
       {!collapsed && (
@@ -205,7 +206,7 @@ export function Backlog({ backlog, statuses, visible, epicTitles, includeDone, o
       if (!next.delete(id)) next.add(id);
       return next;
     });
-  const hasDoneColumn = backlog.doneStatus !== undefined;
+  const hasDoneColumn = backlog.doneStatuses.length > 0;
   const open = backlog.sections.reduce((sum, s) => sum + s.issues.length, 0);
 
   return (

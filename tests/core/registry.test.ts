@@ -5,7 +5,7 @@ import { assertSshUrl, isRemoteUrl, repoNameFromUrl } from '../../src/core/repos
 import { listRepos, registerRepo, removeRepo, resolveRepo, setDefaultRepo } from '../../src/core/repos/registry';
 import { getGitStatus } from '../../src/core/repos/git-status';
 import { createIssue } from '../../src/core/issues/service';
-import { git, makeRepo, tmpDir, useTestHome } from '../helpers';
+import { configFile, git, makeRepo, tmpDir, useTestHome } from '../helpers';
 
 useTestHome();
 
@@ -41,7 +41,7 @@ describe('project registration', () => {
     const info = await registerRepo(root);
     await removeRepo(info.name);
     expect(await listRepos()).toEqual([]);
-    expect((await stat(path.join(root, '.gitboard', 'config.json'))).isFile()).toBe(true);
+    expect((await stat(await configFile(root))).isFile()).toBe(true);
     await expect(removeRepo('sample-app')).rejects.toMatchObject({ code: 'REPO_NOT_FOUND' });
   });
 

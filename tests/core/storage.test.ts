@@ -5,7 +5,7 @@ import { createIssue, deleteIssue, getIssue, listIssues } from '../../src/core/i
 import { loadIssues } from '../../src/core/issues/store';
 import { atomicWriteFile, contentHash, createFileExclusive, detectEol, isInside, samePath } from '../../src/core/storage/fs-safe';
 import { deleteIssueFile, readIssueFile } from '../../src/core/storage/repo-files';
-import { makeRepo, tmpDir, useTestHome } from '../helpers';
+import { configFile as findConfigFile, makeRepo, tmpDir, useTestHome } from '../helpers';
 
 useTestHome();
 
@@ -62,10 +62,10 @@ describe('path containment', () => {
 
   it('refuses a symlinked config file', async () => {
     const { repo, root } = await makeRepo();
-    const configFile = path.join(root, '.gitboard', 'config.json');
-    const elsewhere = path.join(await tmpDir('gitboard-outside-'), 'config.json');
-    await rename(configFile, elsewhere);
-    if (!(await trySymlink(elsewhere, configFile, 'file'))) return;
+    const file = await findConfigFile(root);
+    const elsewhere = path.join(await tmpDir('gitboard-outside-'), path.basename(file));
+    await rename(file, elsewhere);
+    if (!(await trySymlink(elsewhere, file, 'file'))) return;
     await expect(listIssues(repo)).rejects.toMatchObject({ code: 'PATH_OUTSIDE_REPO' });
   });
 });

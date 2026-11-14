@@ -110,10 +110,10 @@ export function compareIssues(a: StoredIssue, b: StoredIssue): number {
 function progressFor(snap: Snapshot, epic: StoredIssue): EpicProgress {
   const children = snap.issues.filter((i) => i.fm.parent === epic.id);
   const columns = effectiveColumns(snap.config, epic.fm.project).columns;
-  const lastColumn = columns[columns.length - 1]?.id;
   const byStatus: Record<string, number> = Object.fromEntries(columns.map((c) => [c.id, 0]));
   for (const child of children) byStatus[child.fm.status] = (byStatus[child.fm.status] ?? 0) + 1;
-  return { total: children.length, done: lastColumn === undefined ? 0 : (byStatus[lastColumn] ?? 0), byStatus };
+  const done = columns.filter((c) => c.done).reduce((sum, c) => sum + (byStatus[c.id] ?? 0), 0);
+  return { total: children.length, done, byStatus };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -241,6 +241,7 @@ function boardFor(snap: Snapshot, project: RepoConfig['projects'][number]): Boar
     columns.push({
       id: status,
       name: `${status} (unknown)`,
+      done: false,
       issues: cards
         .filter((i) => i.fm.status === status)
         .sort(compareIssues)
@@ -274,8 +275,7 @@ export async function getBoard(repo: Repo, input: { project?: string | undefined
 
 /**
  * The backlog view's data (ADR-0014): the same cards and order as the board, flattened into sections by
- * status. The last column is "done" and is left out unless `includeDone` is set; a project with a single
- * column has no done column, so nothing is hidden.
+ * status. Columns flagged done (ADR-0015) are left out unless `includeDone` is set.
  */
 export async function getBacklog(
   repo: Repo,
@@ -287,15 +287,14 @@ export async function getBacklog(
     .filter((p) => input.project === undefined || p.key === input.project)
     .map((project): Backlog => {
       const board = boardFor(snap, project);
-      const configured = effectiveColumns(snap.config, project.key).columns;
-      const doneStatus = configured.length > 1 ? configured[configured.length - 1]?.id : undefined;
-      const hidden = input.includeDone || doneStatus === undefined ? undefined : board.columns.find((c) => c.id === doneStatus);
+      const doneStatuses = effectiveColumns(snap.config, project.key).columns.filter((c) => c.done).map((c) => c.id);
+      const hidden = input.includeDone ? [] : board.columns.filter((c) => doneStatuses.includes(c.id));
       return {
         project: board.project,
         views: board.views,
-        sections: board.columns.filter((c) => c !== hidden),
-        ...(doneStatus !== undefined ? { doneStatus } : {}),
-        hiddenCount: hidden?.issues.length ?? 0,
+        sections: board.columns.filter((c) => !hidden.includes(c)),
+        doneStatuses,
+        hiddenCount: hidden.reduce((sum, c) => sum + c.issues.length, 0),
         epics: board.epics,
       };
     });

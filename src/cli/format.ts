@@ -117,7 +117,10 @@ export function renderBoards(boards: Board[]): string {
 
 export function renderColumns(info: ColumnsInfo): string {
   const scope = info.project ? `project ${info.project}` : 'repository';
-  return [`Columns for ${scope} (from ${info.source}):`, ...info.columns.map((c) => `  ${c.id}  (${c.name})`)].join('\n');
+  return [
+    `Columns for ${scope} (from ${info.source}):`,
+    ...info.columns.map((c) => `  ${c.id}  (${c.name})${c.done ? '  [done]' : ''}`),
+  ].join('\n');
 }
 export function renderColumnsChange(info: ColumnsChangeResult): string {
   const note = info.remapped > 0 ? `\nRemapped ${info.remapped} issue(s).` : '';
@@ -165,7 +168,9 @@ export function renderBacklog(backlogs: Backlog[]): string {
       });
       const epics = backlog.epics.map((e) => `    ${e.ref}  ${e.title}  (${e.progress.done}/${e.progress.total} done)`);
       const hidden =
-        backlog.hiddenCount > 0 ? [`  ${backlog.hiddenCount} issue(s) in "${backlog.doneStatus}" hidden. Use --all to include them.`] : [];
+        backlog.hiddenCount > 0
+          ? [`  ${backlog.hiddenCount} issue(s) in done column(s) (${backlog.doneStatuses.join(', ')}) hidden. Use --all to include them.`]
+          : [];
       return [header, ...sections, ...(epics.length > 0 ? ['  Epics', ...epics] : []), ...hidden].join('\n');
     })
     .join('\n\n');

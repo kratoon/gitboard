@@ -19,6 +19,7 @@ import {
 } from './issues/service';
 import {
   changeColumns,
+  convertConfig,
   createProject,
   deleteProject,
   initRepo,
@@ -38,6 +39,7 @@ import {
   BacklogGetInput,
   BoardGetInput,
   ColumnsResetInput,
+  ConfigConvertInput,
   ColumnsSetInput,
   ColumnsShowInput,
   EmptyInput,
@@ -189,6 +191,13 @@ export const operations: readonly Operation[] = [
     name: 'columns.reset', description: 'Remove a column override so the layer below applies.',
     scope: 'repo', readOnly: false, surfaces: BOTH, cli: 'columns reset', input: ColumnsResetInput,
     handler: (ctx, input) => resetColumns(repoOf(ctx), input),
+  }),
+
+  // --- config -------------------------------------------------------------------------------
+  define({
+    name: 'config.convert', description: 'Convert the repository config between YAML (default) and JSON.',
+    scope: 'repo', readOnly: false, surfaces: BOTH, cli: 'config convert', input: ConfigConvertInput,
+    handler: (ctx, input) => convertConfig(repoOf(ctx), input.to),
   }),
 
   // --- views --------------------------------------------------------------------------------
