@@ -1,0 +1,24 @@
+# Gitboard settings for this repository (see the README).
+# `done: true` marks columns that hold finished work; the backlog hides them.
+version: 1
+projects:
+  - key: ADR
+    name: Architecture decisions
+    columns:
+      - id: proposed
+        done: false
+      - id: accepted
+        done: false
+      - id: superseded
+        done: true
+      - id: rejected
+        done: true
+  - key: OQ
+    name: Open questions
+    columns:
+      - id: open
+        done: false
+      - id: deferred
+        done: false
+      - id: resolved
+        done: true

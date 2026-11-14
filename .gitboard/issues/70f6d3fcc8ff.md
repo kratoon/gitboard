@@ -6,6 +6,7 @@ project: OQ
 type: story
 labels: []
 createdAt: 2026-11-14T14:43:15.401Z
+rank: a1
 ---
 
 - **Question:** `updatedAt` changes on every edit, which makes diffs noisier and can conflict when merging.

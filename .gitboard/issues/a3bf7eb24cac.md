@@ -7,6 +7,7 @@ type: story
 labels: []
 createdAt: 2026-11-14T14:43:16.192Z
 updatedAt: 2026-11-14T14:43:21.876Z
+rank: a8
 ---
 
 - **Question:** Should columns (statuses) be defined once in `.gitboard/config.json` for the whole repo, or may

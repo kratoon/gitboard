@@ -39,7 +39,7 @@ Commit the `.gitboard/` directory to share the board. Gitboard never commits, pu
 | **Repository** | A Git repository registered with Gitboard (`gitboard repo ...`). |
 | **Project** | A group of issues inside a repository, identified by a key such as `AUTH` (like a Jira project). Every issue belongs to one. |
 | **Epic** | An issue with `type: epic` that groups stories. A story links to it with `parent`. One level, same project. |
-| **Status / column** | Where an issue is on the board. Defaults to `todo`, `in-progress`, `done`; overridable per repository and per project. |
+| **Status / column** | Where an issue is on the board. Defaults to `todo`, `in-progress`, `done`; overridable per repository and per project. Each column can be flagged **done** (finished work). |
 | **View** | A way to look at a project's issues: `kanban` (the board) or `backlog` (open work as a list). Which views are offered is configurable per repository and per project. |
 | **Reference** | `KEY-<short id>` such as `AUTH-a3f91c2`, a short id prefix, or the full 12-character id. |
 
@@ -51,7 +51,7 @@ gitboard start [--port 4317] [--no-open]
 
 Add repositories in the UI (a local path, or an SSH URL such as `git@github.com:org/repo.git`, which is
 cloned into a Gitboard-managed folder). Switch between the **Board** and the **Backlog** (open work as a list
-grouped by status, with inline priority and status pickers, quick-add and drag and drop; done work is hidden
+grouped by status, with inline priority and status pickers, quick-add and drag and drop; columns flagged done are hidden
 unless you tick "Show done"). The **Views** button chooses which views a project offers. The board supports drag and drop between columns and within a column,
 search and filters, an epic panel with progress, an issue drawer (edit title, status, priority, labels, epic,
 description and checklist; delete with confirmation), and it **refreshes live** when files change on disk, for
@@ -82,7 +82,8 @@ Global options: `-r, --repo <name|path>`, `--json`, `--help`, `--version`.
 | `gitboard start [--port N] [--no-open]` | Start the local web UI |
 | `gitboard repo add \| list \| remove \| default` | Manage registered repositories |
 | `gitboard project create <KEY> [--name N] [--columns a,b,c]` / `list` / `update <KEY>` / `delete <KEY>` | Manage projects |
-| `gitboard columns show \| set \| reset [--project KEY] [--remap old=new]` | Manage board columns |
+| `gitboard columns show \| set \| reset [--project KEY] [--done ids] [--remap old=new]` | Manage board columns; `--done` says which are done columns |
+| `gitboard config convert [--to yaml\|json]` | Convert `.gitboard/config` between YAML (default) and JSON |
 | `gitboard issue list [--project --status --label --priority --type --parent -q text]` | List and search |
 | `gitboard issue show <ref>` | Show one issue (epics include children and progress) |
 | `gitboard issue create [title] [--project --type --status --priority --label --parent --body --body-file --stdin]` | Create |
@@ -139,23 +140,41 @@ Implement the authentication service.
   project; `rank` (optional) orders cards within a column; unknown keys are preserved.
 - Updates edit only the changed keys (comments and formatting are kept), never rewrite unchanged files, and
   stamp `updatedAt` only when something changed (reordering cards changes `rank` only, never `updatedAt`). Line endings (LF or CRLF) are preserved.
-- Repository settings live in `.gitboard/config.json`:
+- Repository settings live in `.gitboard/config.yaml` (YAML is the default; `config.json` is also supported, and
+  a repository must have exactly one of them):
 
-```json
-{
-  "version": 1,
-  "columns": [{ "id": "backlog" }, { "id": "doing" }, { "id": "done" }],
-  "projects": [
-    { "key": "WEB", "name": "Website" },
-    { "key": "ADR", "name": "Decisions", "columns": [{ "id": "proposed" }, { "id": "accepted" }] }
-  ]
-}
+```yaml
+# Settings for the whole repository; a project can override columns and views.
+version: 1
+columns:
+  - id: backlog
+  - id: doing
+  - id: done
+    done: true            # finished work
+views: [kanban, backlog]  # the views offered; the first is the default
+projects:
+  - key: WEB
+    name: Website
+  - key: ADR
+    name: Decisions
+    columns:
+      - id: proposed
+      - id: accepted
+      - id: superseded
+        done: true
+      - id: rejected
+        done: true
 ```
 
 Columns resolve project, then repository, then the built-in `todo / in-progress / done`. An override replaces
-the layer below. Views are configured the same way with a `views` list (`"kanban"`, `"backlog"`; the first is
-the default), for example `"views": ["backlog"]` on a project, or on the repository to apply to every project;
-the built-in default offers both. Your last choice is remembered in the browser, not in the repository. Issues are valid, readable Markdown without Gitboard.
+the layer below. A column can carry `done: true` to mark finished work: the backlog hides done columns and epic
+progress counts them. If no column says anything, the last one is done. Views are configured the same way with a
+`views` list (`kanban`, `backlog`; the first is the default); the built-in default offers both. Your last choice
+of view is remembered in the browser, not in the repository.
+
+Updates keep the file's format, and YAML comments and layout are preserved. `gitboard config convert` switches a
+repository to the other format (`--to json`, or `--to yaml` which is the default); comments do not survive a
+conversion to JSON. Issues are valid, readable Markdown without Gitboard.
 
 ## Git workflow
 
@@ -202,7 +221,7 @@ ADR-0005.
 ```
  coding agents ──▶ CLI ──────┐
                               ▼
-                      shared core (all business logic) ──▶ .gitboard/*.md, config.json
+                      shared core (all business logic) ──▶ .gitboard/*.md, config.yaml
                               ▲
  React UI ──▶ HTTP server ───┘
 ```

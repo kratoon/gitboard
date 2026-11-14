@@ -6,6 +6,7 @@ project: OQ
 type: story
 labels: []
 createdAt: 2026-11-14T14:43:15.968Z
+rank: a6
 ---
 
 - **Question:** Must every issue carry `project: KEY`, or may it be omitted (unassigned)?

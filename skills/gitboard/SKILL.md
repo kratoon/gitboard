@@ -38,7 +38,7 @@ If the repository is not initialised, ask the user before running `gitboard init
 - **Epic**: an issue with `--type epic` that groups stories. A story links to its epic with `--parent <epic>`.
   Epics cannot be nested, and a story and its epic must be in the same project.
 - **Status**: the column an issue is in. Each project has its own valid statuses (default `todo`,
-  `in-progress`, `done`). Check them with `gitboard columns show --project KEY --json` and never invent one.
+  `in-progress`, `done`); columns flagged done hold finished work. Check them with `gitboard columns show --project KEY --json` and never invent one.
 - **Issue reference**: use the `ref` field from the JSON (for example `AUTH-a3f91c2`), a short id prefix, or
   the full 12-character `id`. Always write the `ref` in commit messages, comments and pull requests so people
   can find the issue.
