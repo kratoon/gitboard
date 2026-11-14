@@ -190,6 +190,31 @@ export function buildProgram(io: CliIo, state: CliState): Command {
       await run(cmd, 'columns.reset', { project: opts.project, remap: parseRemap(opts.remap) }, fmt.renderColumnsChange);
     });
 
+  // --- views ---------------------------------------------------------------------------------
+  const views = program.command('views').description('Show or change which views (kanban, backlog) are enabled');
+  views
+    .command('show')
+    .description('Show the enabled views and where they come from')
+    .option('--project <KEY>')
+    .action(async (opts, cmd: Command) => {
+      await run(cmd, 'views.show', { project: opts.project }, fmt.renderViews);
+    });
+  views
+    .command('set')
+    .description('Enable specific views for the repository, or for one project with --project')
+    .requiredOption('--views <ids>', 'comma-separated view ids; the first is the default (kanban, backlog)', collect)
+    .option('--project <KEY>')
+    .action(async (opts, cmd: Command) => {
+      await run(cmd, 'views.set', { views: opts.views, project: opts.project }, fmt.renderViews);
+    });
+  views
+    .command('reset')
+    .description('Remove a views override so the layer below applies')
+    .option('--project <KEY>')
+    .action(async (opts, cmd: Command) => {
+      await run(cmd, 'views.reset', { project: opts.project }, fmt.renderViews);
+    });
+
   // --- issues --------------------------------------------------------------------------------
   const issue = program.command('issue').description('Manage issues');
   issue
@@ -312,6 +337,14 @@ export function buildProgram(io: CliIo, state: CliState): Command {
   program.command('board').description('Show the board').option('--project <KEY>').action(async (opts, cmd: Command) => {
     await run(cmd, 'board.get', { project: opts.project }, fmt.renderBoards);
   });
+  program
+    .command('backlog')
+    .description('List open work as an ordered list grouped by status (the done column is hidden)')
+    .option('--project <KEY>')
+    .option('--all', 'include the done column')
+    .action(async (opts, cmd: Command) => {
+      await run(cmd, 'backlog.get', { project: opts.project, includeDone: opts.all ? true : undefined }, fmt.renderBacklog);
+    });
   program.command('validate').description('Check issue storage for problems (exit code 4 if any)').action(async (_opts, cmd: Command) => {
     const { repo: selector } = cmd.optsWithGlobals<{ repo?: string }>();
     const result = await executeOperation('validate', {}, { cwd: io.cwd, repo: selector });

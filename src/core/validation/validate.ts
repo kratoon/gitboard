@@ -5,9 +5,10 @@
 import { loadIssues } from '../issues/store';
 import { effectiveColumns } from '../projects/columns';
 import { loadConfig } from '../projects/config';
+import { isViewId } from '../projects/views';
 import { GitboardError } from '../errors';
 import type { Repo } from '../storage/repo-files';
-import type { Problem, ValidateResult } from '../types';
+import { VIEW_IDS, type Problem, type ValidateResult } from '../types';
 
 const file = (id: string) => `.gitboard/issues/${id}.md`;
 
@@ -37,6 +38,19 @@ export async function validateRepo(repo: Repo): Promise<ValidateResult> {
     }
     seen.add(project.key);
   }
+
+  const unknownViews = (owner: string, list: readonly string[] | undefined) => {
+    const unknown = (list ?? []).filter((id) => !isViewId(id));
+    if (unknown.length > 0) {
+      problems.push({
+        code: 'UNKNOWN_VIEW',
+        file: '.gitboard/config.json',
+        message: `${owner} lists unknown view(s): ${unknown.join(', ')}. Known views: ${VIEW_IDS.join(', ')}.`,
+      });
+    }
+  };
+  unknownViews('The repository', config.views);
+  for (const project of config.projects) unknownViews(`Project ${project.key}`, project.views);
 
   const { issues, problems: issueProblems } = await loadIssues(repo);
   problems.push(...issueProblems);

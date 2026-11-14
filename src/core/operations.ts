@@ -9,6 +9,7 @@ import {
   checkItem,
   createIssue,
   deleteIssue,
+  getBacklog,
   getBoard,
   getIssue,
   listIssues,
@@ -28,11 +29,13 @@ import {
   showColumns,
   updateProject,
 } from './projects/config';
+import { resetViews, setViews, showViews } from './projects/views';
 import { getGitStatus } from './repos/git-status';
 import { listRepos, registerRepo, removeRepo, requireInitialized, resolveRepo, setDefaultRepo } from './repos/registry';
 import { installSkills, skillsStatus, syncSkills } from './skills/install';
 import type { Repo } from './storage/repo-files';
 import {
+  BacklogGetInput,
   BoardGetInput,
   ColumnsResetInput,
   ColumnsSetInput,
@@ -52,6 +55,9 @@ import {
   RepoInitInput,
   RepoRefInput,
   SkillsInput,
+  ViewsResetInput,
+  ViewsSetInput,
+  ViewsShowInput,
 } from './types';
 import { validateRepo } from './validation/validate';
 
@@ -185,6 +191,23 @@ export const operations: readonly Operation[] = [
     handler: (ctx, input) => resetColumns(repoOf(ctx), input),
   }),
 
+  // --- views --------------------------------------------------------------------------------
+  define({
+    name: 'views.show', description: 'Show which views are enabled and which layer decides.',
+    scope: 'repo', readOnly: true, surfaces: BOTH, cli: 'views show', input: ViewsShowInput,
+    handler: (ctx, input) => showViews(repoOf(ctx), input.project),
+  }),
+  define({
+    name: 'views.set', description: 'Enable specific views for the repository, or for one project.',
+    scope: 'repo', readOnly: false, surfaces: BOTH, cli: 'views set', input: ViewsSetInput,
+    handler: (ctx, input) => setViews(repoOf(ctx), input),
+  }),
+  define({
+    name: 'views.reset', description: 'Remove a views override so the layer below applies.',
+    scope: 'repo', readOnly: false, surfaces: BOTH, cli: 'views reset', input: ViewsResetInput,
+    handler: (ctx, input) => resetViews(repoOf(ctx), input),
+  }),
+
   // --- issues -------------------------------------------------------------------------------
   define({
     name: 'issue.list', description: 'List issues, optionally filtered.',
@@ -227,6 +250,11 @@ export const operations: readonly Operation[] = [
     name: 'board.get', description: 'Get the board: columns with their issues, per project.',
     scope: 'repo', readOnly: true, surfaces: BOTH, cli: 'board', input: BoardGetInput,
     handler: (ctx, input) => getBoard(repoOf(ctx), input),
+  }),
+  define({
+    name: 'backlog.get', description: 'Get the backlog: open work as an ordered list grouped by status.',
+    scope: 'repo', readOnly: true, surfaces: BOTH, cli: 'backlog', input: BacklogGetInput,
+    handler: (ctx, input) => getBacklog(repoOf(ctx), input),
   }),
   define({
     name: 'validate', description: 'Check issue storage for problems.',

@@ -1,5 +1,6 @@
 /** Human-readable rendering of operation results. Plain text only: no colour, safe to pipe. */
 import type {
+  Backlog,
   Board,
   ColumnsChangeResult,
   ColumnsInfo,
@@ -12,6 +13,7 @@ import type {
   RepoInfo,
   SkillsResult,
   ValidateResult,
+  ViewsInfo,
 } from '../core/types';
 
 export function table(headers: string[], rows: string[][]): string {
@@ -143,4 +145,28 @@ export function renderSkills(result: SkillsResult): string {
       result.locations.map((l) => [l.status, l.mode, l.path, l.agents.join(',')]),
     ),
   ].join('\n');
+}
+
+export function renderViews(info: ViewsInfo): string {
+  const scope = info.project ? `project ${info.project}` : 'repository';
+  return `Views for ${scope} (from ${info.source}): ${info.views.join(', ')}\nThe first view is the default.`;
+}
+
+export function renderBacklog(backlogs: Backlog[]): string {
+  if (backlogs.length === 0) return 'No projects.';
+  return backlogs
+    .map((backlog) => {
+      const header = `${backlog.project.key}  ${backlog.project.name}  (open work)`;
+      const sections = backlog.sections.map((section) => {
+        const rows = section.issues.map(
+          (i) => `    ${i.ref}  ${i.priority ? `[${i.priority}] ` : ''}${i.title}${i.labels.length > 0 ? `  #${i.labels.join(' #')}` : ''}`,
+        );
+        return [`  ${section.name} (${section.issues.length})`, ...rows].join('\n');
+      });
+      const epics = backlog.epics.map((e) => `    ${e.ref}  ${e.title}  (${e.progress.done}/${e.progress.total} done)`);
+      const hidden =
+        backlog.hiddenCount > 0 ? [`  ${backlog.hiddenCount} issue(s) in "${backlog.doneStatus}" hidden. Use --all to include them.`] : [];
+      return [header, ...sections, ...(epics.length > 0 ? ['  Epics', ...epics] : []), ...hidden].join('\n');
+    })
+    .join('\n\n');
 }

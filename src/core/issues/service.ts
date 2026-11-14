@@ -6,8 +6,10 @@ import { GitboardError } from '../errors';
 import { nowIso } from '../runtime';
 import { loadConfig, requireProject } from '../projects/config';
 import { effectiveColumns } from '../projects/columns';
+import { effectiveViews } from '../projects/views';
 import { deleteIssueFile, type Repo } from '../storage/repo-files';
 import type {
+  Backlog,
   Board,
   BoardColumn,
   DeleteResult,
@@ -221,52 +223,82 @@ export async function getIssue(repo: Repo, ref: string, ctx: ServiceContext = qu
   return detail;
 }
 
+function boardFor(snap: Snapshot, project: RepoConfig['projects'][number]): Board {
+  const info = effectiveColumns(snap.config, project.key);
+  const own = snap.issues.filter((i) => i.fm.project === project.key);
+  // Epics are not cards in the status columns; they are listed separately with their progress (ADR-0010).
+  const cards = own.filter((i) => i.fm.type !== 'epic');
+  const columns: BoardColumn[] = info.columns.map((column) => ({
+    ...column,
+    issues: cards
+      .filter((i) => i.fm.status === column.id)
+      .sort(compareIssues)
+      .map((i) => toIssue(i, snap.lengths)),
+  }));
+  // Issues whose status is not a column (for example after an external edit) stay visible.
+  const known = new Set(info.columns.map((c) => c.id));
+  for (const status of [...new Set(cards.map((i) => i.fm.status))].filter((s) => !known.has(s))) {
+    columns.push({
+      id: status,
+      name: `${status} (unknown)`,
+      issues: cards
+        .filter((i) => i.fm.status === status)
+        .sort(compareIssues)
+        .map((i) => toIssue(i, snap.lengths)),
+    });
+  }
+  const projectInfo: ProjectInfo = {
+    key: project.key,
+    name: project.name,
+    ...(project.description !== undefined ? { description: project.description } : {}),
+    ...(project.columns ? { columns: info.columns } : {}),
+    issueCount: own.length,
+  };
+  return {
+    project: projectInfo,
+    columnSource: info.source,
+    views: effectiveViews(snap.config, project.key),
+    columns,
+    epics: own
+      .filter((i) => i.fm.type === 'epic')
+      .sort(compareIssues)
+      .map((epic) => ({ ...toSummary(toIssue(epic, snap.lengths)), progress: progressFor(snap, epic) })),
+  };
+}
+
 export async function getBoard(repo: Repo, input: { project?: string | undefined } = {}): Promise<Board[]> {
   const snap = await snapshot(repo);
   if (input.project !== undefined) requireProject(snap.config, input.project);
-  const projects = snap.config.projects.filter((p) => input.project === undefined || p.key === input.project);
+  return snap.config.projects.filter((p) => input.project === undefined || p.key === input.project).map((p) => boardFor(snap, p));
+}
 
-  return projects.map((project): Board => {
-    const info = effectiveColumns(snap.config, project.key);
-    const own = snap.issues.filter((i) => i.fm.project === project.key);
-    // Epics are not cards in the status columns; they are listed separately with their progress (ADR-0010).
-    const cards = own.filter((i) => i.fm.type !== 'epic');
-    const columns: BoardColumn[] = info.columns.map((column) => ({
-      ...column,
-      issues: cards
-        .filter((i) => i.fm.status === column.id)
-        .sort(compareIssues)
-        .map((i) => toIssue(i, snap.lengths)),
-    }));
-    // Issues whose status is not a column (for example after an external edit) stay visible.
-    const known = new Set(info.columns.map((c) => c.id));
-    for (const status of [...new Set(cards.map((i) => i.fm.status))].filter((s) => !known.has(s))) {
-      columns.push({
-        id: status,
-        name: `${status} (unknown)`,
-        issues: cards
-          .filter((i) => i.fm.status === status)
-          .sort(compareIssues)
-          .map((i) => toIssue(i, snap.lengths)),
-      });
-    }
-    const projectInfo: ProjectInfo = {
-      key: project.key,
-      name: project.name,
-      ...(project.description !== undefined ? { description: project.description } : {}),
-      ...(project.columns ? { columns: info.columns } : {}),
-      issueCount: own.length,
-    };
-    return {
-      project: projectInfo,
-      columnSource: info.source,
-      columns,
-      epics: own
-        .filter((i) => i.fm.type === 'epic')
-        .sort(compareIssues)
-        .map((epic) => ({ ...toSummary(toIssue(epic, snap.lengths)), progress: progressFor(snap, epic) })),
-    };
-  });
+/**
+ * The backlog view's data (ADR-0014): the same cards and order as the board, flattened into sections by
+ * status. The last column is "done" and is left out unless `includeDone` is set; a project with a single
+ * column has no done column, so nothing is hidden.
+ */
+export async function getBacklog(
+  repo: Repo,
+  input: { project?: string | undefined; includeDone?: boolean | undefined } = {},
+): Promise<Backlog[]> {
+  const snap = await snapshot(repo);
+  if (input.project !== undefined) requireProject(snap.config, input.project);
+  return snap.config.projects
+    .filter((p) => input.project === undefined || p.key === input.project)
+    .map((project): Backlog => {
+      const board = boardFor(snap, project);
+      const configured = effectiveColumns(snap.config, project.key).columns;
+      const doneStatus = configured.length > 1 ? configured[configured.length - 1]?.id : undefined;
+      const hidden = input.includeDone || doneStatus === undefined ? undefined : board.columns.find((c) => c.id === doneStatus);
+      return {
+        project: board.project,
+        views: board.views,
+        sections: board.columns.filter((c) => c !== hidden),
+        ...(doneStatus !== undefined ? { doneStatus } : {}),
+        hiddenCount: hidden?.issues.length ?? 0,
+        epics: board.epics,
+      };
+    });
 }
 
 // ---------------------------------------------------------------------------------------------

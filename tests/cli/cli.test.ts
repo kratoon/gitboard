@@ -318,3 +318,44 @@ describe('init is idempotent', () => {
     expect((await runCli(['init', '--columns', 'a,b'], { cwd: root })).err).toMatch(/^warning: /);
   });
 });
+
+describe('views and backlog', () => {
+  it('shows, sets, overrides and resets the enabled views', async () => {
+    const { root } = await makeRepo();
+    const cwd = root;
+    await runCli(['project', 'create', 'ADR', '--name', 'Decisions', '--json'], { cwd });
+
+    expect((await runCli(['views', 'show', '--json'], { cwd })).json.data).toEqual({ views: ['kanban', 'backlog'], source: 'builtin' });
+    expect((await runCli(['views', 'set', '--views', 'backlog', '--json'], { cwd })).json.data).toMatchObject({ views: ['backlog'], source: 'repo' });
+    const project = await runCli(['views', 'set', '--views', 'backlog,kanban', '--project', 'ADR', '--json'], { cwd });
+    expect(project.json.data).toMatchObject({ project: 'ADR', views: ['backlog', 'kanban'], source: 'project' });
+    expect((await runCli(['views', 'show'], { cwd })).out).toContain('Views for repository (from repo): backlog');
+    expect((await runCli(['views', 'show', '--project', 'SAMP', '--json'], { cwd })).json.data.source).toBe('repo');
+
+    expect((await runCli(['views', 'set', '--views', 'timeline', '--json'], { cwd })).code).toBe(2);
+    expect((await runCli(['views', 'set', '--json'], { cwd })).code).toBe(2);
+    expect((await runCli(['views', 'reset', '--project', 'ADR', '--json'], { cwd })).json.data.source).toBe('repo');
+    expect((await runCli(['views', 'reset', '--json'], { cwd })).json.data.source).toBe('builtin');
+  });
+
+  it('prints the backlog and hides done work unless asked', async () => {
+    const { root } = await makeRepo();
+    const cwd = root;
+    await runCli(['issue', 'create', 'Open task', '--priority', 'high', '--label', 'api', '--json'], { cwd });
+    await runCli(['issue', 'create', 'Finished task', '--status', 'done', '--json'], { cwd });
+
+    const text = await runCli(['backlog'], { cwd });
+    expect(text.out).toContain('Open task');
+    expect(text.out).toContain('[high]');
+    expect(text.out).not.toContain('Finished task');
+    expect(text.out).toContain('1 issue(s) in "done" hidden. Use --all');
+
+    const all = await runCli(['backlog', '--all'], { cwd });
+    expect(all.out).toContain('Finished task');
+
+    const json = await runCli(['backlog', '--json'], { cwd });
+    expect(json.json.data[0]).toMatchObject({ doneStatus: 'done', hiddenCount: 1 });
+    expect(json.json.data[0].sections.map((s: { id: string }) => s.id)).toEqual(['todo', 'in-progress']);
+    expect((await runCli(['backlog', '--project', 'NOPE', '--json'], { cwd })).code).toBe(3);
+  });
+});

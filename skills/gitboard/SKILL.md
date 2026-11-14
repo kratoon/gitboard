@@ -58,6 +58,7 @@ gitboard issue list --status in-progress --json    # filter: --project --status 
 gitboard issue list -q "login" --json              # search titles, bodies and ids
 gitboard issue show AUTH-a3f91c2 --json            # one issue; epics include children and progress
 gitboard board --json                              # columns with their issues, per project
+gitboard backlog --json                            # open work as a list grouped by status (--all adds done)
 ```
 
 ## Creating issues

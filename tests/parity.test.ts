@@ -54,6 +54,14 @@ const scenario: Step[] = [
   { op: 'columns.set', input: { columns: ['todo', 'shipped'] }, argv: ['columns', 'set', '--columns', 'todo,shipped'] },
   { op: 'columns.set', input: { columns: ['todo', 'in-progress', 'shipped'], remap: { done: 'shipped' } }, argv: ['columns', 'set', '--columns', 'todo,in-progress,shipped', '--remap', 'done=shipped'] },
   { op: 'issue.delete', input: { id: S2 }, argv: ['issue', 'delete', S2, '--yes'] },
+  { op: 'views.set', input: { views: ['backlog', 'kanban'], project: 'ADR' }, argv: ['views', 'set', '--views', 'backlog,kanban', '--project', 'ADR'] },
+  { op: 'views.set', input: { views: ['backlog'] }, argv: ['views', 'set', '--views', 'backlog'] },
+  { op: 'views.show', input: { project: 'ADR' }, argv: ['views', 'show', '--project', 'ADR'] },
+  { op: 'backlog.get', input: { project: 'PAR' }, argv: ['backlog', '--project', 'PAR'] },
+  { op: 'backlog.get', input: { includeDone: true }, argv: ['backlog', '--all'] },
+  { op: 'views.set', input: { views: ['timeline'] }, argv: ['views', 'set', '--views', 'timeline'] },
+  { op: 'views.reset', input: { project: 'ADR' }, argv: ['views', 'reset', '--project', 'ADR'] },
+  { op: 'views.reset', input: {}, argv: ['views', 'reset'] },
   { op: 'validate', input: {}, argv: ['validate'] },
 ];
 
@@ -162,6 +170,7 @@ describe('CLI, HTTP and core behave identically', () => {
       'HAS_CHILDREN',
       'BAD_PARENT',
       'ORPHANED_STATUS',
+      'INVALID_INPUT',
     ]);
     expect(Object.keys(coreFiles).length).toBeGreaterThan(4);
 

@@ -39,6 +39,20 @@ export const ColumnsSchema = z
   .refine((cols) => new Set(cols.map((c) => c.id)).size === cols.length, 'column ids must be unique');
 
 // ---------------------------------------------------------------------------------------------
+// Views (ADR-0014)
+// ---------------------------------------------------------------------------------------------
+
+/** The views Gitboard knows how to present a project with. */
+export const VIEW_IDS = ['kanban', 'backlog'] as const;
+export type ViewId = (typeof VIEW_IDS)[number];
+export const ViewIdSchema = z.enum(VIEW_IDS);
+/**
+ * Stored lists tolerate ids this version does not know (for example from a newer Gitboard): they are
+ * ignored when resolving views and reported by `validate`.
+ */
+export const StoredViewsSchema = z.array(z.string().min(1)).min(1, 'at least one view is required');
+
+// ---------------------------------------------------------------------------------------------
 // Stored data: repo config and issue frontmatter
 // ---------------------------------------------------------------------------------------------
 
@@ -48,6 +62,7 @@ export const ProjectDefSchema = z
     name: z.string().trim().min(1),
     description: z.string().optional(),
     columns: ColumnsSchema.optional(),
+    views: StoredViewsSchema.optional(),
   })
   .passthrough();
 
@@ -55,6 +70,7 @@ export const RepoConfigSchema = z
   .object({
     version: z.literal(1).default(1),
     columns: ColumnsSchema.optional(),
+    views: StoredViewsSchema.optional(),
     projects: z.array(ProjectDefSchema).default([]),
   })
   .passthrough();
@@ -172,6 +188,19 @@ export const IssueCheckInput = z.object({
   expectedHash: z.string().optional(),
 });
 export const BoardGetInput = z.object({ project: ProjectKeySchema.optional() });
+export const BacklogGetInput = z.object({
+  project: ProjectKeySchema.optional(),
+  /** Also include the last column (the "done" column), which is hidden by default. */
+  includeDone: z.boolean().optional(),
+});
+
+const UniqueViewList = z
+  .array(ViewIdSchema)
+  .min(1, 'at least one view is required')
+  .refine((views) => new Set(views).size === views.length, 'views must be unique');
+export const ViewsShowInput = z.object({ project: ProjectKeySchema.optional() });
+export const ViewsSetInput = z.object({ views: UniqueViewList, project: ProjectKeySchema.optional() });
+export const ViewsResetInput = z.object({ project: ProjectKeySchema.optional() });
 
 export const SkillsInput = z.object({
   agents: z.array(z.string().trim().min(1)).optional(),
@@ -194,6 +223,9 @@ export type IssueMoveInput = z.input<typeof IssueMoveInput>;
 export type IssueDeleteInput = z.input<typeof IssueDeleteInput>;
 export type IssueCheckInput = z.input<typeof IssueCheckInput>;
 export type BoardGetInput = z.input<typeof BoardGetInput>;
+export type BacklogGetInput = z.input<typeof BacklogGetInput>;
+export type ViewsSetInput = z.input<typeof ViewsSetInput>;
+export type ViewsResetInput = z.input<typeof ViewsResetInput>;
 
 // ---------------------------------------------------------------------------------------------
 // Operation outputs
@@ -267,10 +299,28 @@ export interface ProjectInfo {
 export interface BoardColumn extends Column {
   issues: Issue[];
 }
+/** Which views are enabled for a project, and which layer decided (ADR-0014). */
+export interface ViewsInfo {
+  project?: string;
+  views: ViewId[];
+  source: ColumnSource;
+}
 export interface Board {
   project: ProjectInfo;
   columnSource: ColumnSource;
+  views: ViewsInfo;
   columns: BoardColumn[];
+  epics: Array<IssueSummary & { progress: EpicProgress }>;
+}
+/** The project's open work as an ordered list, grouped by status (the last column is hidden unless asked for). */
+export interface Backlog {
+  project: ProjectInfo;
+  views: ViewsInfo;
+  sections: BoardColumn[];
+  /** Id of the column treated as "done", or undefined when the project has only one column. */
+  doneStatus?: string;
+  /** Issues in the done column that were left out. */
+  hiddenCount: number;
   epics: Array<IssueSummary & { progress: EpicProgress }>;
 }
 
