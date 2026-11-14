@@ -1,7 +1,7 @@
 import { GitboardError, formatZodError } from '../errors';
 import { ColumnsSchema, type Column, type ColumnsInfo, type RepoConfig } from '../types';
 
-/** Gitboard's built-in statuses, used when neither the project nor the repo defines columns (ADR-0011). */
+/** Gitboard's built-in statuses, used when neither the project nor the repo defines columns (ADR-c680df6). */
 export const DEFAULT_COLUMNS: readonly Column[] = [
   { id: 'todo', name: 'To Do', done: false },
   { id: 'in-progress', name: 'In Progress', done: false },
@@ -23,7 +23,7 @@ interface StoredColumn {
 }
 
 /**
- * Which columns are done (ADR-0015). If any column says so explicitly (true or false), only columns marked
+ * Which columns are done (ADR-f8d6236). If any column says so explicitly (true or false), only columns marked
  * `done: true` are done. If none does, the last of several columns is done, which is how configs written
  * before the flag existed keep working.
  */
@@ -57,7 +57,7 @@ export function normaliseColumns(
 
 /**
  * Resolves a project's columns: the project override, else the repo override, else the built-in default.
- * An override replaces the layer below; it never merges (ADR-0011).
+ * An override replaces the layer below; it never merges (ADR-c680df6).
  */
 export function effectiveColumns(config: RepoConfig, projectKey?: string): ColumnsInfo {
   const project = projectKey === undefined ? undefined : config.projects.find((p) => p.key === projectKey);

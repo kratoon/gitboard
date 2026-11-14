@@ -100,7 +100,7 @@ describe('repository resolution', () => {
   });
 });
 
-describe('remote URLs (ADR-0005)', () => {
+describe('remote URLs (ADR-b9d4018)', () => {
   it('accepts ssh and scp-style URLs', () => {
     for (const url of ['git@github.com:acme/widgets.git', 'ssh://git@example.com/acme/widgets.git', 'ssh://example.com:2222/acme/w.git', 'deploy@host.example:/srv/git/app.git']) {
       expect(isRemoteUrl(url)).toBe(true);

@@ -1,5 +1,5 @@
 /**
- * Which views a project offers (ADR-0014). Resolved exactly like columns (ADR-0011): the project's own
+ * Which views a project offers (ADR-9082368). Resolved exactly like columns (ADR-c680df6): the project's own
  * list, else the repository's list, else the built-in default. An override replaces the layer below.
  */
 import { loadConfig, requireProject, updateConfig } from './config';

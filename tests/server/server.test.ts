@@ -120,7 +120,7 @@ describe('operations over HTTP', () => {
   });
 });
 
-describe('security (ADR-0005)', () => {
+describe('security (ADR-b9d4018)', () => {
   it('rejects unexpected Host headers (DNS rebinding)', async () => {
     const { server } = await boot();
     const reply = await request(server, 'GET', '/api/health', { headers: { Host: 'evil.example.com' } });

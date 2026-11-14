@@ -1,6 +1,6 @@
 /**
  * Repo configuration (`.gitboard/config.yaml`, or `config.json`): projects, column overrides and views
- * (ADR-0009, ADR-0011, ADR-0014, ADR-0016).
+ * (ADR-18de7e0, ADR-c680df6, ADR-9082368, ADR-6c9f71b).
  */
 import { isDeepStrictEqual } from 'node:util';
 import path from 'node:path';
@@ -361,7 +361,7 @@ export async function setColumns(
   repo: Repo,
   input: { columns: ReadonlyArray<string | { id: string; name?: string | undefined; done?: boolean | undefined }>; project?: string | undefined; remap?: Record<string, string> | undefined },
 ): Promise<ColumnsChangeResult> {
-  // A column that keeps its id keeps its "done" flag unless the caller says otherwise (ADR-0015), so
+  // A column that keeps its id keeps its "done" flag unless the caller says otherwise (ADR-f8d6236), so
   // reordering or renaming columns never silently changes what counts as done.
   const { config } = await loadConfig(repo);
   // Only `done: true` needs carrying: once any column says something, unmarked columns are not done.

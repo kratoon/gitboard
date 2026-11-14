@@ -1,5 +1,5 @@
 /**
- * Request guards for the local server (ADR-0005). The server has no authentication and can modify
+ * Request guards for the local server (ADR-b9d4018). The server has no authentication and can modify
  * local files, so it must refuse anything that did not come from its own page on localhost.
  */
 import type { IncomingMessage } from 'node:http';

@@ -11,7 +11,7 @@ import { configFile, makeRepo, readConfigObject, useTestHome, writeConfigObject 
 useTestHome();
 
 
-describe('enabled views are layered like columns (ADR-0014)', () => {
+describe('enabled views are layered like columns (ADR-9082368)', () => {
   it('defaults to every view, then repository, then project', async () => {
     const { repo } = await makeRepo();
     await createProject(repo, { key: 'ADR', name: 'Decisions' });

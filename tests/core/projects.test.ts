@@ -23,7 +23,7 @@ describe('init', () => {
     const { root } = await makeRepo({ init: false, name: 'my-cool-app' });
     const result = await initRepo(root);
     expect(result.projectKey).toBe('MCA');
-    expect(await configFile(root)).toBe(path.join(root, '.gitboard', 'config.yaml')); // YAML is the default (ADR-0016)
+    expect(await configFile(root)).toBe(path.join(root, '.gitboard', 'config.yaml')); // YAML is the default (ADR-6c9f71b)
     expect(await readConfigObject(root)).toEqual({ version: 1, projects: [{ key: 'MCA', name: 'my-cool-app' }] });
     expect(await readFile(await configFile(root), 'utf8')).toBe('version: 1\nprojects:\n  - key: MCA\n    name: my-cool-app\n');
     expect(await readFile(path.join(root, '.gitboard', '.gitattributes'), 'utf8')).toBe('* text eol=lf\n');

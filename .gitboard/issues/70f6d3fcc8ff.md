@@ -13,4 +13,4 @@ rank: a1
   Keep it as in the sample, make it optional, or drop it and rely on `git log`?
 - **Recommendation:** Keep it (matches the spec sample), but only touch it when content actually changes.
   Consider making it optional in the schema.
-- **Decision / date:** 2026-11-14. Keep `updatedAt`. Gitboard sets it only when the issue's content actually changes (never on a no-op write). The schema treats it as optional, so hand-written issues without it are valid, and Gitboard adds it on the next real change. Recorded in ADR-0003 and ADR-0004.
+- **Decision / date:** 2026-11-14. Keep `updatedAt`. Gitboard sets it only when the issue's content actually changes (never on a no-op write). The schema treats it as optional, so hand-written issues without it are valid, and Gitboard adds it on the next real change. Recorded in ADR-30abf7d and ADR-7a20520.

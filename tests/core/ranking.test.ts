@@ -24,7 +24,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-describe('moving a card writes only that card (ADR-0006)', () => {
+describe('moving a card writes only that card (ADR-95e910d)', () => {
   it('matches a simple model through many random moves, and never writes another issue', async () => {
     const { repo, root } = await makeRepo();
     const priorities: Array<Priority | undefined> = [undefined, 'high', 'low', 'urgent', undefined, 'medium', 'high', 'low', 'urgent'];

@@ -131,7 +131,7 @@ export async function snapshotTree(dir: string, prefix = ''): Promise<Record<str
 }
 
 // ---------------------------------------------------------------------------------------------
-// Config file helpers (the config is YAML by default but may be JSON, ADR-0016)
+// Config file helpers (the config is YAML by default but may be JSON, ADR-6c9f71b)
 // ---------------------------------------------------------------------------------------------
 
 /** Absolute path of the repo's config file, whichever format it uses. */

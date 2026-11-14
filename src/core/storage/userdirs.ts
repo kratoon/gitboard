@@ -1,5 +1,5 @@
 /**
- * User-level directories (ADR-0008, ADR-0013). Together with the repo resolver and git runner, this is
+ * User-level directories (ADR-9d88632, ADR-9b39f45). Together with the repo resolver and git runner, this is
  * one of the few places in core that reads ambient process state.
  */
 import os from 'node:os';

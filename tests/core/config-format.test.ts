@@ -39,7 +39,7 @@ projects:
     name: Operations
 `;
 
-describe('YAML is the default format (ADR-0016)', () => {
+describe('YAML is the default format (ADR-6c9f71b)', () => {
   it('creates config.yaml and no JSON file', async () => {
     const { root } = await makeRepo();
     expect(await names(root)).toEqual(['config.yaml']);
@@ -145,7 +145,7 @@ describe('YAML updates keep comments and layout', () => {
   });
 });
 
-describe('JSON configs keep working (ADR-0016)', () => {
+describe('JSON configs keep working (ADR-6c9f71b)', () => {
   it('stays JSON through every update and never creates a YAML file', async () => {
     const { repo, root } = await makeRepo();
     await convertConfig(repo, 'json');

@@ -1,7 +1,7 @@
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing';
 import type { Priority } from '../types';
 
-/** Thin wrapper so the ranking library is used in exactly one place (ADR-0006). */
+/** Thin wrapper so the ranking library is used in exactly one place (ADR-95e910d). */
 export function keyBetween(before: string | null, after: string | null): string {
   return generateKeyBetween(before, after);
 }
@@ -29,7 +29,7 @@ function toBase62(value: number, width: number): string {
  * 8-digit integer part, then a fractional tail), and it sorts exactly like "priority (highest first), then
  * creation time, then id". Because ranked and unranked cards share this one scale, a card can be placed
  * between any two neighbours by choosing a rank between their keys, without ever writing to the neighbours
- * (ADR-0006). Explicit ranks written by older versions (`a0`, `a1`, ...) sort before every such key, which is
+ * (ADR-95e910d). Explicit ranks written by older versions (`a0`, `a1`, ...) sort before every such key, which is
  * where ranked cards always were.
  */
 export function implicitKey(priority: Priority | undefined, createdAt: string, id: string): string {

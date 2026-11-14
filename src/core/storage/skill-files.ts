@@ -1,5 +1,5 @@
 /**
- * Filesystem side of skill installation (ADR-0007, ADR-0013): locating the packaged skill, hashing and
+ * Filesystem side of skill installation (ADR-992ea64, ADR-9b39f45): locating the packaged skill, hashing and
  * copying skill trees, and creating symlinks or Windows junctions.
  */
 import { lstat, mkdir, readdir, readFile, readlink, realpath, rm, symlink } from 'node:fs/promises';
@@ -122,7 +122,7 @@ export async function writeCopy(dest: string, tree: Map<string, Buffer>, version
 
 /**
  * Links `dest` to `canonical`. POSIX uses a relative symlink; Windows uses a directory junction, which
- * needs no administrator rights (ADR-0013). Returns false if linking is not possible.
+ * needs no administrator rights (ADR-9b39f45). Returns false if linking is not possible.
  */
 export async function makeLink(dest: string, canonical: string): Promise<boolean> {
   await removePath(dest);

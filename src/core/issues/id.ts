@@ -1,11 +1,11 @@
 import { runtime } from '../runtime';
 
-/** A 12-character lowercase hex ID from 6 cryptographically secure random bytes (ADR-0003). */
+/** A 12-character lowercase hex ID from 6 cryptographically secure random bytes (ADR-30abf7d). */
 export function generateId(): string {
   return runtime().randomBytes(6).toString('hex');
 }
 
-/** Shortest unique prefix length (minimum 7) for every id, used for display references (ADR-0009). */
+/** Shortest unique prefix length (minimum 7) for every id, used for display references (ADR-18de7e0). */
 export function shortPrefixLengths(ids: string[]): Map<string, number> {
   const sorted = [...ids].sort();
   const lengths = new Map<string, number>();

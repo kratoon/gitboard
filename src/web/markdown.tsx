@@ -3,7 +3,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
 /**
- * Issue content is untrusted (ADR-0005): raw HTML is never rendered (react-markdown ignores it) and the
+ * Issue content is untrusted (ADR-b9d4018): raw HTML is never rendered (react-markdown ignores it) and the
  * output is sanitised as well. Links open in a new tab without leaking the opener or referrer.
  */
 export function Markdown({ source }: { source: string }) {

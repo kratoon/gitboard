@@ -158,7 +158,7 @@ export interface IdSource {
 
 /**
  * Creates a new issue under a fresh random id using exclusive creation, retrying on collisions
- * (ADR-0003). `fm` must not contain `id`; it is assigned here.
+ * (ADR-30abf7d). `fm` must not contain `id`; it is assigned here.
  */
 export async function createStoredIssue(
   repo: Repo,

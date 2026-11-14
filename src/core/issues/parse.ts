@@ -1,5 +1,5 @@
 /**
- * Markdown + YAML frontmatter parsing and minimal patching (ADR-0003, ADR-0004).
+ * Markdown + YAML frontmatter parsing and minimal patching (ADR-30abf7d, ADR-7a20520).
  *
  * Updates edit the YAML Document in place, so comments, key order and quoting survive. The Markdown
  * body is kept byte for byte unless an operation explicitly changes it, and a file whose content would

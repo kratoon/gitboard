@@ -1,6 +1,6 @@
 /**
  * Issue business rules: projects, statuses, parents, ordering and references. Every operation here is
- * the single implementation used by the CLI, the HTTP server and tests (ADR-0002).
+ * the single implementation used by the CLI, the HTTP server and tests (ADR-9b13ab6).
  */
 import { GitboardError } from '../errors';
 import { nowIso } from '../runtime';
@@ -86,7 +86,7 @@ function toSummary(issue: Issue): IssueSummary {
   return { id: issue.id, ref: issue.ref, title: issue.title, status: issue.status, project: issue.project, type: issue.type };
 }
 
-/** Where a card sorts: its rank, or the key derived from priority and creation time (ADR-0006). */
+/** Where a card sorts: its rank, or the key derived from priority and creation time (ADR-95e910d). */
 export function sortKey(issue: StoredIssue): string {
   return issue.fm.rank ?? implicitKey(issue.fm.priority, issue.fm.createdAt, issue.id);
 }
@@ -109,7 +109,7 @@ function progressFor(snap: Snapshot, epic: StoredIssue): EpicProgress {
 }
 
 // ---------------------------------------------------------------------------------------------
-// References (ADR-0009)
+// References (ADR-18de7e0)
 // ---------------------------------------------------------------------------------------------
 
 const REF_WITH_KEY = /^([A-Z][A-Z0-9]{1,9})-([0-9a-f]{4,12})$/;
@@ -218,7 +218,7 @@ export async function getIssue(repo: Repo, ref: string, ctx: ServiceContext = qu
 function boardFor(snap: Snapshot, project: RepoConfig['projects'][number]): Board {
   const info = effectiveColumns(snap.config, project.key);
   const own = snap.issues.filter((i) => i.fm.project === project.key);
-  // Epics are not cards in the status columns; they are listed separately with their progress (ADR-0010).
+  // Epics are not cards in the status columns; they are listed separately with their progress (ADR-6369337).
   const cards = own.filter((i) => i.fm.type !== 'epic');
   const columns: BoardColumn[] = info.columns.map((column) => ({
     ...column,
@@ -266,8 +266,8 @@ export async function getBoard(repo: Repo, input: { project?: string | undefined
 }
 
 /**
- * The backlog view's data (ADR-0014): the same cards and order as the board, flattened into sections by
- * status. Columns flagged done (ADR-0015) are left out unless `includeDone` is set.
+ * The backlog view's data (ADR-9082368): the same cards and order as the board, flattened into sections by
+ * status. Columns flagged done (ADR-f8d6236) are left out unless `includeDone` is set.
  */
 export async function getBacklog(
   repo: Repo,
@@ -402,7 +402,7 @@ interface Placement {
  * Chooses a rank for a card inserted at `index` of `column` (the column without the moved card): any key
  * between its two neighbours' sort keys, so only the moved card is written. The one exception is a column
  * whose neighbours cannot be separated (equal or inverted keys left by a merge, or a hand-edited rank that is
- * not a valid key); then the whole column is re-ranked (ADR-0006).
+ * not a valid key); then the whole column is re-ranked (ADR-95e910d).
  */
 function computePlacement(column: StoredIssue[], index: number): Placement {
   const prev = column[index - 1];

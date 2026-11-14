@@ -2,7 +2,7 @@ import { ZodError } from 'zod';
 
 /**
  * Stable error codes. The CLI maps each to an exit code and the HTTP server to a status; both read the
- * single table below, so the two adapters cannot disagree (ADR-0002).
+ * single table below, so the two adapters cannot disagree (ADR-9b13ab6).
  */
 export const ERROR_TABLE = {
   UNEXPECTED: { exit: 1, http: 500 },

@@ -1,5 +1,5 @@
 /**
- * The operation registry (ADR-0002). Every business operation is declared here exactly once, with its
+ * The operation registry (ADR-9b13ab6). Every business operation is declared here exactly once, with its
  * input schema, handler and CLI command name. The HTTP server mounts these generically and each CLI
  * command binds flags to the same input schema, so the two adapters cannot drift apart.
  */
@@ -305,7 +305,7 @@ export interface ExecuteOptions {
   cwd?: string | undefined;
   /** Explicit repository: a registry id or name, or a path (CLI `--repo`, HTTP route parameter). */
   repo?: string | undefined;
-  /** Restrict repo-scoped operations to registered repositories (HTTP server; ADR-0005). */
+  /** Restrict repo-scoped operations to registered repositories (HTTP server; ADR-b9d4018). */
   registeredOnly?: boolean | undefined;
 }
 

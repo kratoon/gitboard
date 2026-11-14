@@ -11,7 +11,7 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     proxy: {
-      // Dev only: the server accepts requests that look like they come from its own origin (ADR-0005).
+      // Dev only: the server accepts requests that look like they come from its own origin (ADR-b9d4018).
       '/api': {
         target: 'http://127.0.0.1:4317',
         changeOrigin: true,

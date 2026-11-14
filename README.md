@@ -8,7 +8,7 @@ Code and GitHub Copilot.
 - **Local-first:** no accounts, no database, no cloud. The web UI runs on `127.0.0.1`.
 - **CLI-first:** everything the UI can do is a CLI command, so agents never need the UI or hand-edited files.
 - **Branch-safe:** issue ids are random, so branches create issues independently without merge conflicts.
-- **Single user, personal tool.** Hosting and collaboration are out of scope (see ADR-0012, [below](#architecture-decisions)).
+- **Single user, personal tool.** Hosting and collaboration are out of scope (see ADR-7027c6a, [below](#architecture-decisions)).
 
 ## Install
 
@@ -216,7 +216,7 @@ The server binds to `127.0.0.1` only, rejects unexpected `Host` headers (DNS reb
 non-JSON writes, and only operates on registered repositories (never on paths from requests). File access is
 confined to each repository's `.gitboard/` directory (symlinks and traversal are rejected). Git runs without a
 shell and clone hooks are disabled. Markdown is rendered sanitised, and issue content is never executed. See
-ADR-0005.
+ADR-b9d4018.
 
 ## Architecture
 
@@ -241,26 +241,26 @@ ADR-0005.
 ## Architecture decisions
 
 Gitboard tracks its own architecture decisions in Gitboard. They are issues in the `ADR` project of this
-repository (stored in `.gitboard/issues/`), titled `ADR-0001: ...`, and their status is the column: `proposed`,
+repository (stored in `.gitboard/issues/`), titled by the decision itself (no number), and their status is the column: `proposed`,
 `accepted`, `superseded` or `rejected`.
 
 ```bash
 gitboard init                                    # once per clone: registers this repo so `gitboard start` lists it
 gitboard issue list --project ADR                # all decisions
-gitboard issue list --project ADR -q "ADR-0012"  # find one by number, then `gitboard issue show <ref>`
+gitboard issue list --project ADR -q "security"  # find one by title, then `gitboard issue show <ref>`
 gitboard board --project ADR
 ```
 
-To record a new decision, create an issue with the next number and a body that follows the usual sections
+To record a new decision, create an issue and a body that follows the usual sections
 (`Date` and `Related` bullets, then `## Context`, `## Decision`, `## Alternatives considered`,
 `## Consequences`):
 
 ```bash
-gitboard issue create "ADR-0014: Title" --project ADR --status proposed --body-file decision.md
+gitboard issue create "Title" --project ADR --status proposed --body-file decision.md
 gitboard issue move <ref> accepted      # or superseded / rejected (say which ADR replaces it in the body)
 ```
 
-Reference decisions by number (`ADR-0002`) in code comments, pull requests and other ADRs.
+Reference decisions by their Gitboard reference (`ADR-9b13ab6`) in code comments, pull requests and other ADRs.
 
 Questions that are not decided yet are issues in the `OQ` project, with the columns `open`, `deferred` and
 `resolved`. They have no numbers of their own: refer to one by its Gitboard reference (for example

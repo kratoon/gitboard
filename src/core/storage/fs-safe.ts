@@ -1,5 +1,5 @@
 /**
- * Filesystem helpers. All filesystem access in core goes through `core/storage` (ADR-0012), and this
+ * Filesystem helpers. All filesystem access in core goes through `core/storage` (ADR-7027c6a), and this
  * module holds the primitives: hashing, atomic writes, exclusive creation and path-containment checks.
  */
 import { createHash, randomBytes } from 'node:crypto';
@@ -49,7 +49,7 @@ const RETRYABLE = new Set(['EPERM', 'EBUSY', 'EACCES']);
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * `rename` can fail transiently on Windows when a scanner or watcher holds the file (ADR-0013), so it
+ * `rename` can fail transiently on Windows when a scanner or watcher holds the file (ADR-9b39f45), so it
  * is retried with a short backoff.
  */
 export async function renameWithRetry(from: string, to: string, attempts = 6): Promise<void> {
@@ -84,7 +84,7 @@ export async function atomicWriteFile(file: string, data: string | Buffer): Prom
 const LINK_FALLBACK = new Set(['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'EXDEV', 'ENOSYS', 'EACCES', 'EMLINK']);
 
 /**
- * Creates `file` only if it does not exist (ADR-0003). The content is written to a temp file and then
+ * Creates `file` only if it does not exist (ADR-30abf7d). The content is written to a temp file and then
  * hard-linked into place, so readers never see a partial file and an existing file is never replaced.
  * Filesystems without hard links fall back to an exclusive (`wx`) write.
  * Throws an error with `code === 'EEXIST'` if the file already exists.

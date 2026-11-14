@@ -1,7 +1,7 @@
 /**
  * All reads and writes of a repository's `.gitboard/` directory. Higher layers never touch the
- * filesystem directly (ADR-0012). Every path is built from a validated ID and checked against the repo
- * root after resolving symlinks (ADR-0005).
+ * filesystem directly (ADR-7027c6a). Every path is built from a validated ID and checked against the repo
+ * root after resolving symlinks (ADR-b9d4018).
  */
 import { lstat, mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -38,7 +38,7 @@ export async function openRepo(root: string): Promise<Repo> {
   return { root: real };
 }
 
-/** The repo config is YAML by default; JSON is also read and written (ADR-0016). */
+/** The repo config is YAML by default; JSON is also read and written (ADR-6c9f71b). */
 export const CONFIG_FILE_NAMES = ['config.yaml', 'config.yml', 'config.json'] as const;
 export const DEFAULT_CONFIG_FILE = 'config.yaml';
 export type ConfigFormat = 'yaml' | 'json';
@@ -199,7 +199,7 @@ export async function readAllIssueFiles(repo: Repo): Promise<{ files: RawIssueFi
 
 /**
  * Replaces an existing issue file atomically. If `expectedHash` is given and the file no longer matches
- * it, nothing is written and CONFLICT is thrown (ADR-0004).
+ * it, nothing is written and CONFLICT is thrown (ADR-7a20520).
  */
 export async function writeIssueFile(repo: Repo, id: string, text: string, expectedHash: string): Promise<void> {
   const file = path.join(await issuesDir(repo), issueFileName(id));

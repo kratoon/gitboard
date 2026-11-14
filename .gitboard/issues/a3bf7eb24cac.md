@@ -15,4 +15,4 @@ rank: a8
 - **Recommendation:** Repo-level only in the MVP. Per-project override is a non-breaking later addition.
 - **Note (2026-11-14):** migrating ADRs into Gitboard (OQ-9a86155) would need ADR-specific statuses, which
   strengthens the case for per-project columns. Worth reconsidering before M1.
-- **Decision / date:** 2026-11-14. Done in the MVP, with three layers: Gitboard built-in defaults, then a repo override, then a project override that takes precedence over the repo. Recorded in ADR-0011.
+- **Decision / date:** 2026-11-14. Done in the MVP, with three layers: Gitboard built-in defaults, then a repo override, then a project override that takes precedence over the repo. Recorded in ADR-c680df6.

@@ -1,6 +1,6 @@
 ---
 id: 8c2dda3b8cfc
-title: "ADR-0001: Single ESM npm package"
+title: "Single ESM npm package"
 status: accepted
 project: ADR
 type: story
@@ -10,7 +10,7 @@ updatedAt: 2026-11-14T14:43:17.922Z
 ---
 
 - **Date:** 2026-11-14
-- **Related:** ADR-0002, OQ-15fbb43
+- **Related:** ADR-9b13ab6, OQ-15fbb43
 
 ## Context
 

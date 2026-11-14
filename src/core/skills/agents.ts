@@ -1,5 +1,5 @@
 /**
- * Where each coding agent discovers skills (ADR-0007). This is data, so a path change is a one-line
+ * Where each coding agent discovers skills (ADR-992ea64). This is data, so a path change is a one-line
  * edit. Paths were verified on 2026-11-14 and must be re-verified when agents change (they move fast).
  */
 export interface AgentDef {

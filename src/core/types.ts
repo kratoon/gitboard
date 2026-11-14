@@ -1,5 +1,5 @@
 /**
- * Web-safe types and schemas (ADR-0002).
+ * Web-safe types and schemas (ADR-9b13ab6).
  *
  * This is the only core module the web app may import. It must stay free of Node imports: only `zod`
  * and plain TypeScript. Schemas here are the single source of validation for frontmatter, config and
@@ -33,7 +33,7 @@ export const ColumnSchema = z
     name: z.string().trim().min(1).optional(),
     /**
      * Marks a column as "done" (completed or closed work). If no column in a list sets this, the last
-     * column counts as done, as before (ADR-0015).
+     * column counts as done, as before (ADR-f8d6236).
      */
     done: z.boolean().optional(),
   })
@@ -44,7 +44,7 @@ export const ColumnsSchema = z
   .refine((cols) => new Set(cols.map((c) => c.id)).size === cols.length, 'column ids must be unique');
 
 // ---------------------------------------------------------------------------------------------
-// Views (ADR-0014)
+// Views (ADR-9082368)
 // ---------------------------------------------------------------------------------------------
 
 /** The views Gitboard knows how to present a project with. */
@@ -82,7 +82,7 @@ export const RepoConfigSchema = z
 export type RepoConfig = z.output<typeof RepoConfigSchema>;
 export type ProjectDef = z.output<typeof ProjectDefSchema>;
 
-/** Unknown keys pass through so user extensions survive writes (ADR-0003). */
+/** Unknown keys pass through so user extensions survive writes (ADR-30abf7d). */
 export const IssueFrontmatterSchema = z
   .object({
     id: IdSchema,
@@ -241,7 +241,7 @@ export type ViewsResetInput = z.input<typeof ViewsResetInput>;
 export interface Column {
   id: string;
   name: string;
-  /** True for columns that hold finished work (ADR-0015). Always resolved, never undefined. */
+  /** True for columns that hold finished work (ADR-f8d6236). Always resolved, never undefined. */
   done: boolean;
 }
 export type ColumnSource = 'project' | 'repo' | 'builtin';
@@ -293,7 +293,7 @@ export type IssueSummary = Pick<Issue, 'id' | 'ref' | 'title' | 'status' | 'proj
 
 export interface EpicProgress {
   total: number;
-  /** Children in any of the project's done columns (ADR-0015). */
+  /** Children in any of the project's done columns (ADR-f8d6236). */
   done: number;
   byStatus: Record<string, number>;
 }
@@ -315,7 +315,7 @@ export interface ProjectInfo {
 export interface BoardColumn extends Column {
   issues: Issue[];
 }
-/** Which views are enabled for a project, and which layer decided (ADR-0014). */
+/** Which views are enabled for a project, and which layer decided (ADR-9082368). */
 export interface ViewsInfo {
   project?: string;
   views: ViewId[];
@@ -333,7 +333,7 @@ export interface Backlog {
   project: ProjectInfo;
   views: ViewsInfo;
   sections: BoardColumn[];
-  /** Ids of the project's done columns, which are hidden unless asked for (ADR-0015). */
+  /** Ids of the project's done columns, which are hidden unless asked for (ADR-f8d6236). */
   doneStatuses: string[];
   /** Issues in the done columns that were left out. */
   hiddenCount: number;
@@ -374,7 +374,7 @@ export interface GitStatus {
 
 export interface MoveResult {
   issue: Issue;
-  /** Neighbouring issues that were assigned a rank so the move could be placed (ADR-0006). */
+  /** Neighbouring issues that were assigned a rank so the move could be placed (ADR-95e910d). */
   reranked: string[];
 }
 export interface DeleteResult {

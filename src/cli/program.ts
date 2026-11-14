@@ -1,5 +1,5 @@
 /**
- * The CLI adapter (ADR-0002). It parses arguments, reads input files and stdin, prompts when running
+ * The CLI adapter (ADR-9b13ab6). It parses arguments, reads input files and stdin, prompts when running
  * interactively, prints results and maps errors to exit codes. Every business operation is delegated
  * to `executeOperation`; nothing here validates or manipulates issues itself.
  */

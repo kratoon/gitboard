@@ -15,4 +15,4 @@ rank: a6
   every filter and view.
 - **Recommendation:** Required, with a default project created by `init`. Existing and hand-written issues
   without a key fail `validate` with a clear fix hint.
-- **Decision / date:** 2026-11-14. `project` is required on every issue, and `init` creates a default project. `parent` stays optional (ADR-0010). Recorded in ADR-0009.
+- **Decision / date:** 2026-11-14. `project` is required on every issue, and `init` creates a default project. `parent` stays optional (ADR-6369337). Recorded in ADR-18de7e0.

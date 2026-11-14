@@ -1,6 +1,6 @@
 /**
  * `gitboard validate`: reports everything that makes a repo's issue storage inconsistent
- * (ADR-0003, ADR-0009, ADR-0010, ADR-0011). Purely read-only.
+ * (ADR-30abf7d, ADR-18de7e0, ADR-6369337, ADR-c680df6). Purely read-only.
  */
 import { loadIssues } from '../issues/store';
 import { effectiveColumns } from '../projects/columns';

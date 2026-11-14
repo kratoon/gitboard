@@ -1,5 +1,5 @@
 /**
- * The user-level registry of known repositories (ADR-0008) and repository resolution.
+ * The user-level registry of known repositories (ADR-9d88632) and repository resolution.
  * Registry data lives outside any repo and holds machine-specific paths.
  */
 import { createHash } from 'node:crypto';
@@ -105,7 +105,7 @@ export async function registerRepo(source: string, name?: string): Promise<RepoI
     await ensureDir(managedReposDir());
     if (!(await pathIsDirectory(dest))) {
       const hooks = await emptyHooksDir();
-      // `--` keeps the URL from being read as an option; hooks are disabled for the clone (ADR-0005).
+      // `--` keeps the URL from being read as an option; hooks are disabled for the clone (ADR-b9d4018).
       await runGit(undefined, ['-c', `core.hooksPath=${hooks}`, '-c', 'protocol.ext.allow=never', 'clone', '--', url, dest]);
     }
     const repo = await openRepo(dest);
@@ -141,7 +141,7 @@ function findEntry(registry: Registry, ref: string): RegistryEntry | undefined {
   return registry.repos.find((r) => r.id === ref) ?? registry.repos.find((r) => r.name === ref);
 }
 
-/** Removes the registry entry only. The repository and any managed clone stay on disk (ADR-0008). */
+/** Removes the registry entry only. The repository and any managed clone stay on disk (ADR-9d88632). */
 export async function removeRepo(ref: string): Promise<{ id: string; name: string }> {
   const registry = await readRegistry();
   const entry = findEntry(registry, ref);

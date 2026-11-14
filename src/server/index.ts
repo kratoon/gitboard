@@ -1,5 +1,5 @@
 /**
- * The local HTTP adapter (ADR-0002, ADR-0005). It exposes the shared operation registry over HTTP and
+ * The local HTTP adapter (ADR-9b13ab6, ADR-b9d4018). It exposes the shared operation registry over HTTP and
  * pushes file-change events to the UI. It contains no business logic: every request is passed to
  * `executeOperation`, exactly like the CLI.
  *

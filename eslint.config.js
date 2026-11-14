@@ -1,7 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-// Architecture boundaries (ADR-0002). These rules are what keeps business logic in one place:
+// Architecture boundaries (ADR-9b13ab6). These rules are what keeps business logic in one place:
 //  - core imports nothing from cli/server/web and does no terminal I/O.
 //  - cli and server never import each other (the single exception is `cli/commands/start.ts`,
 //    which only launches the server).
@@ -34,8 +34,8 @@ export default tseslint.config(
         'error',
         {
           patterns: [
-            { group: ['**/cli/**', '**/server/**', '**/web/**', 'react', 'react-dom', 'commander'], message: 'core must not depend on cli, server or web (ADR-0002).' },
-            { group: ['node:fs', 'node:fs/*', 'fs', 'fs/*'], message: 'Filesystem access belongs in src/core/storage (ADR-0012).' },
+            { group: ['**/cli/**', '**/server/**', '**/web/**', 'react', 'react-dom', 'commander'], message: 'core must not depend on cli, server or web (ADR-9b13ab6).' },
+            { group: ['node:fs', 'node:fs/*', 'fs', 'fs/*'], message: 'Filesystem access belongs in src/core/storage (ADR-7027c6a).' },
           ],
         },
       ],
@@ -51,16 +51,16 @@ export default tseslint.config(
   {
     // The storage layer is where filesystem access lives, so only the layering rule applies here.
     files: ['src/core/storage/**/*.ts'],
-    rules: forbid(['**/cli/**', '**/server/**', '**/web/**'], 'core must not depend on cli, server or web (ADR-0002).'),
+    rules: forbid(['**/cli/**', '**/server/**', '**/web/**'], 'core must not depend on cli, server or web (ADR-9b13ab6).'),
   },
   {
     files: ['src/cli/**/*.ts'],
     ignores: ['src/cli/commands/start.ts'],
-    rules: forbid(['**/server/**', '**/web/**'], 'cli must not import the server or web (ADR-0002).'),
+    rules: forbid(['**/server/**', '**/web/**'], 'cli must not import the server or web (ADR-9b13ab6).'),
   },
   {
     files: ['src/server/**/*.ts'],
-    rules: forbid(['**/cli/**', '**/web/**'], 'server must not import the cli or web (ADR-0002).'),
+    rules: forbid(['**/cli/**', '**/web/**'], 'server must not import the cli or web (ADR-9b13ab6).'),
   },
   {
     files: ['src/web/**/*.{ts,tsx}'],
@@ -71,7 +71,7 @@ export default tseslint.config(
           patterns: [
             {
               group: ['**/core/*', '!**/core/types'],
-              message: 'web may import only the web-safe core/types entry point (ADR-0002).',
+              message: 'web may import only the web-safe core/types entry point (ADR-9b13ab6).',
             },
             { group: ['**/cli/**', '**/server/**'], message: 'web must not import cli or server.' },
             { group: ['node:*', 'fs', 'path', 'child_process'], message: 'web must not use Node modules.' },

@@ -1,5 +1,5 @@
 /**
- * Filesystem watching for the server (ADR-0004). Detects edits made outside the app (agents, editors,
+ * Filesystem watching for the server (ADR-7a20520). Detects edits made outside the app (agents, editors,
  * `git checkout`) so the UI can refresh. Events whose content hash matches what was last seen are
  * dropped, which filters duplicate events from the OS and from our own atomic writes.
  */

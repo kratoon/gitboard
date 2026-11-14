@@ -1,5 +1,5 @@
 /**
- * Git runner. Always `execFile` with an argument array and no shell (ADR-0005), so nothing in an issue,
+ * Git runner. Always `execFile` with an argument array and no shell (ADR-b9d4018), so nothing in an issue,
  * URL or path can be interpreted by a shell. Reads ambient process state (environment) on purpose.
  */
 import { execFile } from 'node:child_process';

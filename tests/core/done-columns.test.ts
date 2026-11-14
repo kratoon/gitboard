@@ -9,7 +9,7 @@ useTestHome();
 
 const doneIds = (info: { columns: Array<{ id: string; done: boolean }> }) => info.columns.filter((c) => c.done).map((c) => c.id);
 
-describe('done columns (ADR-0015)', () => {
+describe('done columns (ADR-f8d6236)', () => {
   it('flags the built-in done column and falls back to "the last column" when nothing is said', async () => {
     const { repo } = await makeRepo();
     expect(doneIds(await showColumns(repo))).toEqual(['done']);

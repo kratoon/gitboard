@@ -3,7 +3,7 @@ import { runGit } from '../storage/git';
 import type { Repo } from '../storage/repo-files';
 import type { GitStatus } from '../types';
 
-/** Read-only: current branch and whether `.gitboard/` has uncommitted changes (ADR-0012). */
+/** Read-only: current branch and whether `.gitboard/` has uncommitted changes (ADR-7027c6a). */
 export async function getGitStatus(repo: Repo): Promise<GitStatus> {
   try {
     await runGit(repo.root, ['rev-parse', '--git-dir']);

@@ -1,5 +1,5 @@
 /**
- * ADR-0002: CLI, HTTP and direct core calls must behave identically. The same scenario runs through
+ * ADR-9b13ab6: CLI, HTTP and direct core calls must behave identically. The same scenario runs through
  * each interface in its own repo (with a fixed clock and id sequence), and the resulting files and
  * every result or error code must match exactly.
  */

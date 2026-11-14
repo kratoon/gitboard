@@ -13,7 +13,7 @@ export function isRemoteUrl(source: string): boolean {
   return SSH_URL.test(source) || SCP_LIKE.test(source);
 }
 
-/** Validates a remote URL before it is passed to git (ADR-0005). Only SSH remotes are supported. */
+/** Validates a remote URL before it is passed to git (ADR-b9d4018). Only SSH remotes are supported. */
 export function assertSshUrl(source: string): string {
   if (source.startsWith('-') || /\s/.test(source) || source.includes('\0')) {
     throw new GitboardError('INVALID_REMOTE_URL', `Invalid repository URL: ${source}`);

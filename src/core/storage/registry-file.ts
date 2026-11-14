@@ -1,4 +1,4 @@
-/** Reads and writes the user-level registry file and prepares managed clone directories (ADR-0008). */
+/** Reads and writes the user-level registry file and prepares managed clone directories (ADR-9d88632). */
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { atomicWriteFile } from './fs-safe';
@@ -27,7 +27,7 @@ export function managedReposDir(): string {
   return path.join(userDirs().data, 'repos');
 }
 
-/** An empty directory used as `core.hooksPath` so cloning never runs hooks (ADR-0005). */
+/** An empty directory used as `core.hooksPath` so cloning never runs hooks (ADR-b9d4018). */
 export async function emptyHooksDir(): Promise<string> {
   const dir = path.join(userDirs().data, 'no-hooks');
   await mkdir(dir, { recursive: true });

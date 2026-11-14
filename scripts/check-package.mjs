@@ -29,7 +29,7 @@ if (pkg.bin?.gitboard !== 'dist/cli.js') problems.push('package.json bin.gitboar
 if (!readFileSync('dist/cli.js', 'utf8').startsWith('#!/usr/bin/env node')) problems.push('dist/cli.js is missing its shebang');
 if (process.platform !== 'win32' && (statSync('dist/cli.js').mode & 0o111) === 0) problems.push('dist/cli.js is not executable');
 if (pkg.scripts?.postinstall || pkg.scripts?.preinstall || pkg.scripts?.install) {
-  problems.push('install scripts are not allowed: Gitboard must not run code in consuming repositories (ADR-0007)');
+  problems.push('install scripts are not allowed: Gitboard must not run code in consuming repositories (ADR-992ea64)');
 }
 
 if (problems.length > 0) {

@@ -1,5 +1,5 @@
 /**
- * `gitboard skills install | sync | status` (ADR-0007). Installs the packaged skill into a repository
+ * `gitboard skills install | sync | status` (ADR-992ea64). Installs the packaged skill into a repository
  * or the user's home: one canonical copy in `.agents/skills/gitboard`, plus per-agent locations for
  * agents that do not read that directory. Customised installs are never overwritten without `force`.
  */
