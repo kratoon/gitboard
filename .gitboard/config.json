@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "key": "ADR",
+      "name": "Architecture decisions",
+      "columns": [
+        {
+          "id": "proposed"
+        },
+        {
+          "id": "accepted"
+        },
+        {
+          "id": "superseded"
+        },
+        {
+          "id": "rejected"
+        }
+      ]
+    }
+  ]
+}

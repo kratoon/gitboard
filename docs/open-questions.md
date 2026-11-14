@@ -1,8 +1,9 @@
 # Open Questions
 
 Tracks decisions that are not yet made, grouped by when they must be settled. When a question is resolved, set
-its status to `Resolved`, record the answer, link the ADR that captures it (create or amend one), and move
-the entry to the **Resolved** section. Don't delete entries, so the history stays readable.
+its status to `Resolved`, record the answer, link the ADR that captures it (an issue in the `ADR` project:
+create or amend one), and move the entry to the **Resolved** section. Don't delete entries, so the history
+stays readable.
 
 **Status values:** `Open` (must be settled for the MVP) | `Deferred` (post-MVP, not blocking) | `Resolved`
 
@@ -14,13 +15,13 @@ _None._
 
 | ID | Question | Revisit |
 |---|---|---|
-| [OQ-013](#oq-013) | Migrate ADRs into Gitboard as project `ADR` | post-MVP |
 | [OQ-015](#oq-015) | Hosted / multi-user readiness | post-MVP |
 
 ## Resolved
 
 | ID | Question | Recorded in |
 |---|---|---|
+| [OQ-013](#oq-013) | Migrate ADRs into Gitboard as project `ADR` | `ADR` project in `.gitboard/` |
 | [OQ-011](#oq-011) | Epic status and progress: stored or derived? | ADR-0010 |
 | [OQ-001](#oq-001) | Intra-column card ordering | ADR-0006 |
 | [OQ-002](#oq-002) | Keep `updatedAt` in frontmatter? | ADR-0003, ADR-0004 |
@@ -39,25 +40,6 @@ _None._
 ---
 
 # Deferred entries
-
-## OQ-013
-**Migrate ADRs into Gitboard as project `ADR`**
-
-- **Intent:** Once the MVP works, track our decisions in Gitboard itself (dogfooding). The ADRs become issues
-  in a new project with key `ADR`, and `docs/decisions/*.md` is retired or generated from the issues.
-- **Decision so far:** Deferred until the MVP is implemented. Until then, `docs/decisions/` and this file
-  remain the source of truth.
-- **Things to settle at migration time:**
-  - **Statuses:** ADRs use `Proposed / Accepted / Superseded / Rejected`, not `todo / in-progress / done`.
-    This is satisfied by per-project columns (OQ-009, ADR-0011).
-  - **Open questions:** they could migrate too, as issues in `ADR` (label `question`) or as a separate
-    project (e.g. `OQ`).
-  - **Cross-references:** ADR-to-ADR and OQ links (`Related:`) need an in-body convention, since the
-    schema has only `parent`. IDs are random hex, so the old `ADR-0007` numbers would become titles or labels.
-  - **Migration path:** a one-off script using only the CLI (`issue create --project ADR ...`), per the
-    CLI-first rule, with no direct file writes.
-- **Status:** Deferred
-- **Decision / date:** 2026-11-14. Deferred. The three design constraints above are accepted (ADR-0012). Hosting itself is out of scope for the MVP.
 
 ---
 
@@ -85,6 +67,19 @@ _None._
 ---
 
 # Resolved entries
+
+## OQ-013
+**Migrate ADRs into Gitboard as project `ADR`**
+
+- **Intent:** Track our decisions in Gitboard itself (dogfooding).
+- **Status:** Resolved
+- **Decision / date:** 2026-11-14. The ADRs moved from `docs/decisions/` into the `ADR` project of this
+  repository's `.gitboard/`, using only the CLI. Each is an issue titled `ADR-00NN: ...`; the status is the
+  column (`proposed`, `accepted`, `superseded`, `rejected`, a project-level column override per ADR-0011);
+  sibling links became plain `ADR-00NN` references. The template and the index file were dropped (the
+  `ADR` board is the index; the template is described in the README). Open questions stay in this file.
+
+---
 
 ## OQ-011
 **Epic status and progress: stored or derived?**

@@ -8,7 +8,7 @@ Code and GitHub Copilot.
 - **Local-first:** no accounts, no database, no cloud. The web UI runs on `127.0.0.1`.
 - **CLI-first:** everything the UI can do is a CLI command, so agents never need the UI or hand-edited files.
 - **Branch-safe:** issue ids are random, so branches create issues independently without merge conflicts.
-- **Single user, personal tool.** Hosting and collaboration are out of scope (see [ADR-0012](docs/decisions/0012-git-workflow-and-hosting-readiness.md)).
+- **Single user, personal tool.** Hosting and collaboration are out of scope (see ADR-0012, [below](#architecture-decisions)).
 
 ## Install
 
@@ -188,7 +188,7 @@ The server binds to `127.0.0.1` only, rejects unexpected `Host` headers (DNS reb
 non-JSON writes, and only operates on registered repositories (never on paths from requests). File access is
 confined to each repository's `.gitboard/` directory (symlinks and traversal are rejected). Git runs without a
 shell and clone hooks are disabled. Markdown is rendered sanitised, and issue content is never executed. See
-[ADR-0005](docs/decisions/0005-local-server-security-model.md).
+ADR-0005.
 
 ## Architecture
 
@@ -207,8 +207,33 @@ shell and clone hooks are disabled. Markdown is rendered sanitised, and issue co
 - `src/web`: React UI with no business logic; search and filters call the same core operations.
 - Boundaries are enforced by ESLint (`eslint.config.js`) and by tests: every operation has a CLI command, and
   a parity test runs one scenario through core, CLI and HTTP and requires identical results and files.
-- Decisions and their rationale: [`docs/decisions/`](docs/decisions/README.md). Open and deferred questions:
-  [`docs/open-questions.md`](docs/open-questions.md).
+- Decisions and their rationale: see [Architecture decisions](#architecture-decisions). Open and deferred
+  questions: [`docs/open-questions.md`](docs/open-questions.md).
+
+## Architecture decisions
+
+Gitboard tracks its own architecture decisions in Gitboard. They are issues in the `ADR` project of this
+repository (stored in `.gitboard/issues/`), titled `ADR-0001: ...`, and their status is the column: `proposed`,
+`accepted`, `superseded` or `rejected`.
+
+```bash
+gitboard init                                    # once per clone: registers this repo so `gitboard start` lists it
+gitboard issue list --project ADR                # all decisions
+gitboard issue list --project ADR -q "ADR-0012"  # find one by number, then `gitboard issue show <ref>`
+gitboard board --project ADR
+```
+
+To record a new decision, create an issue with the next number and a body that follows the usual sections
+(`Date` and `Related` bullets, then `## Context`, `## Decision`, `## Alternatives considered`,
+`## Consequences`):
+
+```bash
+gitboard issue create "ADR-0014: Title" --project ADR --status proposed --body-file decision.md
+gitboard issue move <ref> accepted      # or superseded / rejected (say which ADR replaces it in the body)
+```
+
+Reference decisions by number (`ADR-0002`) in code comments, pull requests and other ADRs. Open questions that
+are still being decided live in [`docs/open-questions.md`](docs/open-questions.md).
 
 ## Development
 
