@@ -137,8 +137,8 @@ Implement the authentication service.
 
 - `id`: 12 lowercase hex characters from `crypto.randomBytes(6)`; also the filename. Never changes.
 - `project` is required; `type` is `story` (default) or `epic`; `parent` (optional) is an epic id in the same
-  project; `rank` (optional) orders cards within a column (set only when you give a position, so a plain status
-  change rewrites just one file); unknown keys are preserved.
+  project; `rank` (optional) orders cards within a column (set only when you give a position; a move
+  or reorder rewrites just the moved issue, never its neighbours); unknown keys are preserved.
 - Updates edit only the changed keys (comments and formatting are kept), never rewrite unchanged files, and
   stamp `updatedAt` only when something changed (reordering cards changes `rank` only, never `updatedAt`). Line endings (LF or CRLF) are preserved.
 - Repository settings live in `.gitboard/config.yaml` (YAML is the default; `config.json` is also supported, and
