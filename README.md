@@ -40,6 +40,7 @@ Commit the `.gitboard/` directory to share the board. Gitboard never commits, pu
 | **Project** | A group of issues inside a repository, identified by a key such as `AUTH` (like a Jira project). Every issue belongs to one. |
 | **Epic** | An issue with `type: epic` that groups stories. A story links to it with `parent`. One level, same project. |
 | **Status / column** | Where an issue is on the board. Defaults to `todo`, `in-progress`, `done`; overridable per repository and per project. |
+| **View** | A way to look at a project's issues: `kanban` (the board) or `backlog` (open work as a list). Which views are offered is configurable per repository and per project. |
 | **Reference** | `KEY-<short id>` such as `AUTH-a3f91c2`, a short id prefix, or the full 12-character id. |
 
 ## Running the web UI
@@ -49,7 +50,9 @@ gitboard start [--port 4317] [--no-open]
 ```
 
 Add repositories in the UI (a local path, or an SSH URL such as `git@github.com:org/repo.git`, which is
-cloned into a Gitboard-managed folder). The board supports drag and drop between columns and within a column,
+cloned into a Gitboard-managed folder). Switch between the **Board** and the **Backlog** (open work as a list
+grouped by status, with inline priority and status pickers, quick-add and drag and drop; done work is hidden
+unless you tick "Show done"). The **Views** button chooses which views a project offers. The board supports drag and drop between columns and within a column,
 search and filters, an epic panel with progress, an issue drawer (edit title, status, priority, labels, epic,
 description and checklist; delete with confirmation), and it **refreshes live** when files change on disk, for
 example when an agent runs the CLI. The header shows the current Git branch and whether `.gitboard/` has
@@ -88,6 +91,8 @@ Global options: `-r, --repo <name|path>`, `--json`, `--help`, `--version`.
 | `gitboard issue check <ref> <n> [--uncheck]` | Tick a checklist item (1-based) |
 | `gitboard issue delete <id> [--yes] [--unlink-children]` | Delete (needs the full id) |
 | `gitboard board [--project KEY]` | Print the board |
+| `gitboard backlog [--project KEY] [--all]` | Print open work as a list grouped by status (`--all` includes the done column) |
+| `gitboard views show \| set \| reset [--project KEY] [--views backlog,kanban]` | Choose which views are offered (first is the default) |
 | `gitboard validate` | Check issue storage (exit code 4 on problems) |
 | `gitboard status` | Git branch and uncommitted `.gitboard` changes |
 | `gitboard skills install \| sync \| status` | Agent skill (see below) |
@@ -148,7 +153,9 @@ Implement the authentication service.
 ```
 
 Columns resolve project, then repository, then the built-in `todo / in-progress / done`. An override replaces
-the layer below. Issues are valid, readable Markdown without Gitboard.
+the layer below. Views are configured the same way with a `views` list (`"kanban"`, `"backlog"`; the first is
+the default), for example `"views": ["backlog"]` on a project, or on the repository to apply to every project;
+the built-in default offers both. Your last choice is remembered in the browser, not in the repository. Issues are valid, readable Markdown without Gitboard.
 
 ## Git workflow
 

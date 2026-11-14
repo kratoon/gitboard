@@ -7,15 +7,19 @@ stays readable.
 
 **Status values:** `Open` (must be settled for the MVP) | `Deferred` (post-MVP, not blocking) | `Resolved`
 
-## Open: needed for the MVP
+## Open
 
-_None._
+| ID | Question | Blocks |
+|---|---|---|
+| [OQ-016](#oq-016) | What counts as the backlog, and what is "done"? | ADR-0014 |
 
 ## Deferred: post-MVP
 
 | ID | Question | Revisit |
 |---|---|---|
 | [OQ-015](#oq-015) | Hosted / multi-user readiness | post-MVP |
+| [OQ-017](#oq-017) | Group the backlog by epic | after ADR-0014 |
+| [OQ-018](#oq-018) | Custom and saved views | after ADR-0014 |
 
 ## Resolved
 
@@ -36,6 +40,23 @@ _None._
 | [OQ-012](#oq-012) | Issue `type` field and `parent` rules | ADR-0010 |
 | [OQ-014](#oq-014) | Git workflow for edits: branches, commits, branch protection | ADR-0012 |
 
+
+---
+
+# Open entries
+
+## OQ-016
+**What counts as the backlog, and what is "done"?**
+
+- **Question:** ADR-0014 defines the backlog as a project's open work listed by status, hiding the project's
+  last column as "done" unless "Show done" / `--all` is used. Is that the right meaning? Alternatives: (a) only
+  the first column ("not started yet"), (b) a configurable list of backlog statuses per project, (c) hide the
+  last column only when the project says so.
+- **Why it matters:** the last column is not always "done". In the `ADR` project it is `rejected`.
+- **Recommendation:** keep the default (last column is done). If a project needs something else, add an
+  optional per-project `doneStatuses` list later; it is a non-breaking addition to the config.
+- **Status:** Open
+- **Decision / date:** _pending_
 
 ---
 
@@ -63,6 +84,29 @@ _None._
   `config.json` and a card's `rank`.
 - **Status:** Deferred
 - **Decision / date:** 2026-11-14. Deferred. The three design constraints above are accepted (ADR-0012). Hosting itself is out of scope for the MVP.
+
+---
+
+## OQ-017
+**Group the backlog by epic**
+
+- **Question:** Besides grouping by status, should the backlog be groupable by epic, so each epic is a section
+  with its stories? Dragging a row to another epic section would then change its `parent`.
+- **Recommendation:** add it as a view option after the status-grouped backlog has been used for a while.
+  Ordering inside an epic section would reuse the status-column rank, so it needs a small design note.
+- **Status:** Deferred
+- **Decision / date:** _pending_
+
+## OQ-018
+**Custom and saved views**
+
+- **Question:** Should users define their own views (a saved filter, a grouping, a column subset) in
+  `config.json`, beyond the built-in `kanban` and `backlog`?
+- **Recommendation:** wait for real demand. If needed, allow `views` entries to be objects such as
+  `{ "id": "my-bugs", "type": "backlog", "filter": { "label": "bug" } }` while plain strings keep meaning the
+  built-ins, so existing files stay valid.
+- **Status:** Deferred
+- **Decision / date:** _pending_
 
 ---
 
