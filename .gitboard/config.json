@@ -18,6 +18,21 @@
           "id": "rejected"
         }
       ]
+    },
+    {
+      "key": "OQ",
+      "name": "Open questions",
+      "columns": [
+        {
+          "id": "open"
+        },
+        {
+          "id": "deferred"
+        },
+        {
+          "id": "resolved"
+        }
+      ]
     }
   ]
 }

@@ -214,8 +214,8 @@ ADR-0005.
 - `src/web`: React UI with no business logic; search and filters call the same core operations.
 - Boundaries are enforced by ESLint (`eslint.config.js`) and by tests: every operation has a CLI command, and
   a parity test runs one scenario through core, CLI and HTTP and requires identical results and files.
-- Decisions and their rationale: see [Architecture decisions](#architecture-decisions). Open and deferred
-  questions: [`docs/open-questions.md`](docs/open-questions.md).
+- Decisions and their rationale, and the questions still being decided: see
+  [Architecture decisions](#architecture-decisions).
 
 ## Architecture decisions
 
@@ -239,8 +239,22 @@ gitboard issue create "ADR-0014: Title" --project ADR --status proposed --body-f
 gitboard issue move <ref> accepted      # or superseded / rejected (say which ADR replaces it in the body)
 ```
 
-Reference decisions by number (`ADR-0002`) in code comments, pull requests and other ADRs. Open questions that
-are still being decided live in [`docs/open-questions.md`](docs/open-questions.md).
+Reference decisions by number (`ADR-0002`) in code comments, pull requests and other ADRs.
+
+Questions that are not decided yet are issues in the `OQ` project, with the columns `open`, `deferred` and
+`resolved`. They have no numbers of their own: refer to one by its Gitboard reference (for example
+`OQ-85a6d2c`). A reference never changes unless another issue's id starts with the same 7
+characters, in which case Gitboard asks for more; the full id always works.
+
+```bash
+gitboard backlog --project OQ                    # unresolved questions (resolved ones are hidden; add --all)
+gitboard issue create "Question title" --project OQ --status open --body-file question.md
+gitboard issue move <ref> resolved               # after recording the answer in the body and, if it
+                                                 # is a design decision, in an ADR
+```
+
+A question body has the bullets `Question`, `Recommendation` and `Decision / date`. When a question is
+resolved, name the ADR that records the outcome in its `Decision / date` text.
 
 ## Development
 

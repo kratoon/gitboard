@@ -6,10 +6,11 @@ project: ADR
 type: story
 labels: []
 createdAt: 2026-11-14T14:10:22.451Z
+updatedAt: 2026-11-14T14:43:17.922Z
 ---
 
 - **Date:** 2026-11-14
-- **Related:** ADR-0002, OQ-005
+- **Related:** ADR-0002, OQ-15fbb43
 
 ## Context
 
@@ -19,7 +20,7 @@ to work.
 
 ## Decision
 
-- Publish one unscoped package named `gitboard` (name confirmed available, OQ-005) exposing the `gitboard` binary, containing compiled `core`, `cli`, `server`, the built
+- Publish one unscoped package named `gitboard` (name confirmed available, OQ-15fbb43) exposing the `gitboard` binary, containing compiled `core`, `cli`, `server`, the built
   web bundle (`dist/web`), and `skills/`.
 - ESM only, strict TypeScript, Node >= 20.
 - Bundle with `tsup` (Node code) and Vite (web). Module boundaries are enforced by ESLint
