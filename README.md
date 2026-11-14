@@ -88,7 +88,7 @@ Global options: `-r, --repo <name|path>`, `--json`, `--help`, `--version`.
 | `gitboard issue show <ref>` | Show one issue (epics include children and progress) |
 | `gitboard issue create [title] [--project --type --status --priority --label --parent --body --body-file --stdin]` | Create |
 | `gitboard issue update <ref> [--title --status --priority --add-label --remove-label --set-labels --project --parent --no-parent --body ...]` | Update |
-| `gitboard issue move <ref> [status] [--before <ref> \| --after <ref> \| --top \| --bottom]` | Change status and/or order |
+| `gitboard issue move <ref> [status] [--before <ref> \| --after <ref> \| --top \| --bottom]` | Change status and/or order. A status change alone ranks nothing and rewrites only that issue |
 | `gitboard issue check <ref> <n> [--uncheck]` | Tick a checklist item (1-based) |
 | `gitboard issue delete <id> [--yes] [--unlink-children]` | Delete (needs the full id) |
 | `gitboard board [--project KEY]` | Print the board |
@@ -137,7 +137,8 @@ Implement the authentication service.
 
 - `id`: 12 lowercase hex characters from `crypto.randomBytes(6)`; also the filename. Never changes.
 - `project` is required; `type` is `story` (default) or `epic`; `parent` (optional) is an epic id in the same
-  project; `rank` (optional) orders cards within a column; unknown keys are preserved.
+  project; `rank` (optional) orders cards within a column (set only when you give a position, so a plain status
+  change rewrites just one file); unknown keys are preserved.
 - Updates edit only the changed keys (comments and formatting are kept), never rewrite unchanged files, and
   stamp `updatedAt` only when something changed (reordering cards changes `rank` only, never `updatedAt`). Line endings (LF or CRLF) are preserved.
 - Repository settings live in `.gitboard/config.yaml` (YAML is the default; `config.json` is also supported, and
