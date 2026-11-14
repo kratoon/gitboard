@@ -379,18 +379,20 @@ describe('moves that change nothing', () => {
     expect(await state(root, ids)).toEqual(afterReorder);
   });
 
-  it('give neighbours a rank without touching their updatedAt, and never touch it for pure reordering', async () => {
+  it('rank only the moved card: neighbours are never written and nobody gets a new updatedAt', async () => {
     const { repo, root } = await makeRepo();
     const a = await createIssue(repo, { title: 'a' });
     const b = await createIssue(repo, { title: 'b' });
     const c = await createIssue(repo, { title: 'c' });
-    await moveIssue(repo, { ref: a.id, after: c.id }); // reorders: a goes to the bottom
+    const neighbours = [b.id, c.id];
+    const before = await state(root, neighbours);
 
-    for (const id of [a.id, b.id, c.id]) {
-      const text = await readFile(issueFile(root, id), 'utf8');
-      expect(text).toContain('rank:');
-      expect(text).not.toContain('updatedAt');
-    }
+    const result = await moveIssue(repo, { ref: a.id, after: c.id }); // a goes to the bottom
+    expect(result.reranked).toEqual([]);
+    expect(await state(root, neighbours)).toEqual(before);
+    const moved = await readFile(issueFile(root, a.id), 'utf8');
+    expect(moved).toContain('rank:');
+    expect(moved).not.toContain('updatedAt');
     expect((await listIssues(repo)).map((i) => i.title)).toEqual(['b', 'c', 'a']);
   });
 

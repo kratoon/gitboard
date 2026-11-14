@@ -24,13 +24,12 @@ import type {
   IssueSummary,
   IssueUpdateInput,
   MoveResult,
-  Priority,
   ProjectInfo,
   RepoConfig,
 } from '../types';
 import { shortPrefixLengths } from './id';
 import { checklistOf, setChecklistItem } from './parse';
-import { keyBetween, keysBetween } from './rank';
+import { implicitKey, keyBetween, keysBetween } from './rank';
 import { createStoredIssue, loadIssues, saveChanges, type IdSource, type StoredIssue } from './store';
 
 export interface ServiceContext {
@@ -39,7 +38,6 @@ export interface ServiceContext {
 const quiet: ServiceContext = { warn: () => undefined };
 
 const DEFAULT_BODY = '## Description\n\n## Acceptance Criteria\n\n';
-const PRIORITY_WEIGHT: Record<Priority, number> = { urgent: 3, high: 2, medium: 1, low: 0 };
 
 // ---------------------------------------------------------------------------------------------
 // Snapshot and views
@@ -88,22 +86,16 @@ function toSummary(issue: Issue): IssueSummary {
   return { id: issue.id, ref: issue.ref, title: issue.title, status: issue.status, project: issue.project, type: issue.type };
 }
 
-/** Order within a column: ranked cards by rank, then unranked by priority and creation time (ADR-0006). */
+/** Where a card sorts: its rank, or the key derived from priority and creation time (ADR-0006). */
+export function sortKey(issue: StoredIssue): string {
+  return issue.fm.rank ?? implicitKey(issue.fm.priority, issue.fm.createdAt, issue.id);
+}
+
+/** Order within a column: by sort key, ties broken by id. */
 export function compareIssues(a: StoredIssue, b: StoredIssue): number {
-  const ra = a.fm.rank;
-  const rb = b.fm.rank;
-  if (ra !== undefined && rb !== undefined) {
-    if (ra !== rb) return ra < rb ? -1 : 1;
-    return a.id < b.id ? -1 : 1;
-  }
-  if (ra !== undefined) return -1;
-  if (rb !== undefined) return 1;
-  const pa = PRIORITY_WEIGHT[a.fm.priority ?? 'medium'];
-  const pb = PRIORITY_WEIGHT[b.fm.priority ?? 'medium'];
-  if (pa !== pb) return pb - pa;
-  const ca = Date.parse(a.fm.createdAt);
-  const cb = Date.parse(b.fm.createdAt);
-  if (ca !== cb) return ca - cb;
+  const ka = sortKey(a);
+  const kb = sortKey(b);
+  if (ka !== kb) return ka < kb ? -1 : 1;
   return a.id < b.id ? -1 : 1;
 }
 
@@ -407,32 +399,24 @@ interface Placement {
 }
 
 /**
- * Chooses a rank for a card inserted at `index` of `column` (the column without the moved card).
- * Normally only the moved card changes. Neighbours get ranks only when needed to make the order
- * expressible: unranked cards above the target, or colliding ranks left by a merge (ADR-0006).
+ * Chooses a rank for a card inserted at `index` of `column` (the column without the moved card): any key
+ * between its two neighbours' sort keys, so only the moved card is written. The one exception is a column
+ * whose neighbours cannot be separated (equal or inverted keys left by a merge, or a hand-edited rank that is
+ * not a valid key); then the whole column is re-ranked (ADR-0006).
  */
 function computePlacement(column: StoredIssue[], index: number): Placement {
   const prev = column[index - 1];
   const next = column[index];
-
-  if (prev === undefined) {
-    if (next?.fm.rank !== undefined) return { rank: keyBetween(null, next.fm.rank), assign: [] };
-    return { rank: keyBetween(null, null), assign: [] }; // ranked cards sort before unranked ones
+  const before = prev ? sortKey(prev) : null;
+  // Top of the column: stay above every card that is ever derived or ranked later, not just above the
+  // current first card, so "top" keeps meaning top. Keys starting with `h` are the derived ones.
+  const after = next ? (before === null && sortKey(next).startsWith('h') ? 'a0' : sortKey(next)) : null;
+  if (before !== null && after !== null && before >= after) return rebalance(column, index);
+  try {
+    return { rank: keyBetween(before, after), assign: [] };
+  } catch {
+    return rebalance(column, index);
   }
-  if (prev.fm.rank !== undefined) {
-    const nextRank = next?.fm.rank ?? null;
-    if (nextRank === null || prev.fm.rank < nextRank) return { rank: keyBetween(prev.fm.rank, nextRank), assign: [] };
-    return rebalance(column, index); // equal or inverted ranks from a merge
-  }
-  // `prev` is unranked, so every card above the target is unranked after the ranked prefix.
-  const firstUnranked = column.findIndex((i) => i.fm.rank === undefined);
-  const lastRanked = column[firstUnranked - 1];
-  const needing = column.slice(firstUnranked, index);
-  const keys = keysBetween(lastRanked?.fm.rank ?? null, null, needing.length + 1);
-  return {
-    rank: keys[needing.length] as string,
-    assign: needing.map((issue, i) => ({ issue, rank: keys[i] as string })),
-  };
 }
 
 function rebalance(column: StoredIssue[], index: number): Placement {
