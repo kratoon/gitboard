@@ -161,6 +161,7 @@ projects:
     columns:
       - id: proposed
       - id: accepted
+        done: true
       - id: superseded
         done: true
       - id: rejected
