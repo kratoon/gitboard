@@ -22,3 +22,12 @@ projects:
         done: false
       - id: resolved
         done: true
+  - key: BUG
+    name: Bugs
+    columns:
+      - id: open
+        done: false
+      - id: in-progress
+        done: false
+      - id: done
+        done: true
