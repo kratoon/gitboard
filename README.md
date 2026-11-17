@@ -262,15 +262,16 @@ gitboard issue move <ref> accepted      # or superseded / rejected (say which AD
 
 Reference decisions by their Gitboard reference (`ADR-9b13ab6`) in code comments, pull requests and other ADRs.
 
-Questions that are not decided yet are issues in the `OQ` project, with the columns `open`, `deferred` and
-`resolved`. They have no numbers of their own: refer to one by its Gitboard reference (for example
-`OQ-85a6d2c`). A reference never changes unless another issue's id starts with the same 7
-characters, in which case Gitboard asks for more; the full id always works.
+Open questions and other work are issues in the `FEAT` project (columns `todo`, `in-progress`, `done`).
+Questions carry the label `question` (and `deferred` while parked). They have no numbers of their own: refer to
+one by its Gitboard reference (for example `FEAT-85a6d2c`). A reference never changes unless another issue's
+id starts with the same 7 characters, in which case Gitboard asks for more; the full id always works.
 
 ```bash
-gitboard backlog --project OQ                    # unresolved questions (resolved ones are hidden; add --all)
-gitboard issue create "Question title" --project OQ --status open --body-file question.md
-gitboard issue move <ref> resolved               # after recording the answer in the body and, if it
+gitboard backlog --project FEAT                  # open work (done ones are hidden; add --all)
+gitboard issue list --project FEAT --label question
+gitboard issue create "Question title" --project FEAT --label question --body-file question.md
+gitboard issue move <ref> done                   # after recording the answer in the body and, if it
                                                  # is a design decision, in an ADR
 ```
 

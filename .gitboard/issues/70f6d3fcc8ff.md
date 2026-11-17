@@ -1,12 +1,14 @@
 ---
 id: 70f6d3fcc8ff
 title: Keep `updatedAt` in frontmatter?
-status: resolved
-project: OQ
+status: done
+project: FEAT
 type: story
-labels: []
+labels:
+  - question
 createdAt: 2026-11-14T14:43:15.401Z
 rank: a1
+updatedAt: 2026-11-17T13:45:50.627Z
 ---
 
 - **Question:** `updatedAt` changes on every edit, which makes diffs noisier and can conflict when merging.

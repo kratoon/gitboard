@@ -13,15 +13,6 @@ projects:
         done: true
       - id: rejected
         done: true
-  - key: OQ
-    name: Open questions
-    columns:
-      - id: open
-        done: false
-      - id: deferred
-        done: false
-      - id: resolved
-        done: true
   - key: BUG
     name: Bugs
     columns:
@@ -31,3 +22,5 @@ projects:
         done: false
       - id: done
         done: true
+  - key: FEAT
+    name: Features

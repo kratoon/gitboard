@@ -10,7 +10,7 @@ updatedAt: 2026-11-14T14:43:17.922Z
 ---
 
 - **Date:** 2026-11-14
-- **Related:** ADR-9b13ab6, OQ-15fbb43
+- **Related:** ADR-9b13ab6, FEAT-15fbb43
 
 ## Context
 
@@ -20,7 +20,7 @@ to work.
 
 ## Decision
 
-- Publish one unscoped package named `gitboard` (name confirmed available, OQ-15fbb43) exposing the `gitboard` binary, containing compiled `core`, `cli`, `server`, the built
+- Publish one unscoped package named `gitboard` (name confirmed available, FEAT-15fbb43) exposing the `gitboard` binary, containing compiled `core`, `cli`, `server`, the built
   web bundle (`dist/web`), and `skills/`.
 - ESM only, strict TypeScript, Node >= 20.
 - Bundle with `tsup` (Node code) and Vite (web). Module boundaries are enforced by ESLint
