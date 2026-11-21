@@ -380,7 +380,6 @@ export function App() {
           tick={tick}
           onClose={closePage}
           onChanged={() => void reload()}
-          onOpenPage={() => undefined}
           onFilterEpic={(id) => {
             setFilters({ ...NO_FILTERS, parent: id });
             navigate(repoPath(repo.slug));
@@ -523,7 +522,6 @@ export function App() {
               tick={tick}
               onClose={() => setOpenId(null)}
               onChanged={() => void reload()}
-              onOpenPage={(ref) => navigate(issuePath(repo.slug, ref))}
               onFilterEpic={(id) => {
                 setFilters({ ...NO_FILTERS, parent: id });
                 setOpenId(null);

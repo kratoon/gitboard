@@ -4,7 +4,7 @@ import type { Board, IssueDetail } from '../core/types';
 import { api } from './api';
 import { ApiError } from './client';
 import { errorMessage } from './Dialogs';
-import { LinkedText } from './links';
+import { LinkedText, internalClick, useLinks } from './links';
 import { Markdown } from './markdown';
 
 interface Props {
@@ -16,13 +16,12 @@ interface Props {
   /** Increments whenever files change on disk. */
   tick: number;
   onClose: () => void;
-  /** Opens this issue on its own page; receives the issue's reference. */
-  onOpenPage: (ref: string) => void;
   onChanged: () => void;
   onFilterEpic: (id: string) => void;
 }
 
-export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, onClose, onChanged, onOpenPage, onFilterEpic }: Props) {
+export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, onClose, onChanged, onFilterEpic }: Props) {
+  const links = useLinks();
   const page = variant === 'page';
   const shell = page ? 'drawer issue-page' : 'drawer';
   const [issue, setIssue] = useState<IssueDetail | null>(null);
@@ -115,15 +114,19 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   const statusKnown = columns.some((c) => c.id === issue.status);
   const epics = (board?.epics ?? []).filter((e) => e.id !== issue.id);
   const editing = draft !== null;
+  const pagePath = links?.resolve(issue.ref) ?? null;
 
   return (
     <aside className={shell} aria-label="Issue details">
       <header className="drawer-header">
-        <span className="ref">{issue.ref}</span>
+        {!page && pagePath !== null && links ? (
+          <a className="ref issue-key" href={pagePath} title="Open this issue on its own page" onClick={internalClick(links, pagePath)}>{issue.ref}</a>
+        ) : (
+          <span className="ref">{issue.ref}</span>
+        )}
         <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
         <span className={`chip ${issue.type === 'epic' ? 'epic' : ''}`}>{issue.type}</span>
         <span className="spacer" />
-        {!page && <button onClick={() => onOpenPage(issue.ref)} title="Open this issue on its own page">Open full page</button>}
         <button onClick={onClose} aria-label={page ? 'Back to the board' : 'Close'}>{page ? '← Back' : '✕'}</button>
       </header>
 
