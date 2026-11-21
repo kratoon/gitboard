@@ -5,10 +5,11 @@
 import { loadIssues } from '../issues/store';
 import { effectiveColumns } from '../projects/columns';
 import { loadConfig } from '../projects/config';
+import { isEpicColumnId } from '../projects/epic-columns';
 import { isViewId } from '../projects/views';
 import { GitboardError } from '../errors';
 import { existingConfigNames, type Repo } from '../storage/repo-files';
-import { VIEW_IDS, type Problem, type ValidateResult } from '../types';
+import { EPIC_COLUMN_IDS, VIEW_IDS, type Problem, type ValidateResult } from '../types';
 
 const file = (id: string) => `.gitboard/issues/${id}.md`;
 
@@ -52,6 +53,19 @@ export async function validateRepo(repo: Repo): Promise<ValidateResult> {
   };
   unknownViews('The repository', config.views);
   for (const project of config.projects) unknownViews(`Project ${project.key}`, project.views);
+
+  const unknownEpicColumns = (owner: string, list: readonly string[] | undefined) => {
+    const unknown = (list ?? []).filter((id) => !isEpicColumnId(id));
+    if (unknown.length > 0) {
+      problems.push({
+        code: 'UNKNOWN_EPIC_COLUMN',
+        file: configFile,
+        message: `${owner} lists unknown epic column(s): ${unknown.join(', ')}. Known columns: ${EPIC_COLUMN_IDS.join(', ')}.`,
+      });
+    }
+  };
+  unknownEpicColumns('The repository', config.epicColumns);
+  for (const project of config.projects) unknownEpicColumns(`Project ${project.key}`, project.epicColumns);
 
   const { issues, problems: issueProblems } = await loadIssues(repo);
   problems.push(...issueProblems);

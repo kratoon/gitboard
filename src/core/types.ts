@@ -61,6 +61,11 @@ export const ViewIdSchema = z.enum(VIEW_IDS);
  */
 export const StoredViewsSchema = z.array(z.string().min(1)).min(1, 'at least one view is required');
 
+/** Columns of the child-issue table in an epic's detail (FEAT-130c757). */
+export const EPIC_COLUMN_IDS = ['key', 'title', 'status', 'priority', 'labels'] as const;
+export type EpicColumnId = (typeof EPIC_COLUMN_IDS)[number];
+export const StoredEpicColumnsSchema = z.array(z.string().min(1)).min(1, 'at least one epic column is required');
+
 // ---------------------------------------------------------------------------------------------
 // Stored data: repo config and issue frontmatter
 // ---------------------------------------------------------------------------------------------
@@ -72,6 +77,7 @@ export const ProjectDefSchema = z
     description: z.string().optional(),
     columns: ColumnsSchema.optional(),
     views: StoredViewsSchema.optional(),
+    epicColumns: StoredEpicColumnsSchema.optional(),
   })
   .passthrough();
 
@@ -82,6 +88,7 @@ export const RepoConfigSchema = z
     id: z.string().trim().regex(REPO_SLUG_PATTERN, 'must be lowercase letters, digits, dots, dashes and slashes').optional(),
     columns: ColumnsSchema.optional(),
     views: StoredViewsSchema.optional(),
+    epicColumns: StoredEpicColumnsSchema.optional(),
     projects: z.array(ProjectDefSchema).default([]),
   })
   .passthrough();
@@ -303,9 +310,15 @@ export interface EpicProgress {
   done: number;
   byStatus: Record<string, number>;
 }
+/** A child of an epic, with what the epic's child table can show. */
+export interface EpicChild extends IssueSummary {
+  priority?: Priority;
+  labels: string[];
+}
+
 export interface IssueDetail extends Issue {
   parentIssue?: IssueSummary;
-  children?: IssueSummary[];
+  children?: EpicChild[];
   progress?: EpicProgress;
 }
 
@@ -331,6 +344,8 @@ export interface Board {
   project: ProjectInfo;
   columnSource: ColumnSource;
   views: ViewsInfo;
+  /** Columns of the child table in an epic's detail, resolved from the config. */
+  epicColumns: EpicColumnId[];
   columns: BoardColumn[];
   epics: Array<IssueSummary & { progress: EpicProgress }>;
 }

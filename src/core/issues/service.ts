@@ -6,6 +6,7 @@ import { GitboardError } from '../errors';
 import { nowIso } from '../runtime';
 import { loadConfig, requireProject } from '../projects/config';
 import { effectiveColumns } from '../projects/columns';
+import { effectiveEpicColumns } from '../projects/epic-columns';
 import { effectiveViews } from '../projects/views';
 import { deleteIssueFile, type Repo } from '../storage/repo-files';
 import type {
@@ -210,7 +211,10 @@ export async function getIssue(repo: Repo, ref: string, ctx: ServiceContext = qu
     detail.children = snap.issues
       .filter((i) => i.fm.parent === stored.id)
       .sort(compareIssues)
-      .map((child) => toSummary(toIssue(child, snap.lengths)));
+      .map((child) => {
+        const issue = toIssue(child, snap.lengths);
+        return { ...toSummary(issue), ...(issue.priority !== undefined ? { priority: issue.priority } : {}), labels: issue.labels };
+      });
     detail.progress = progressFor(snap, stored);
   }
   return detail;
@@ -252,6 +256,7 @@ function boardFor(snap: Snapshot, project: RepoConfig['projects'][number]): Boar
     project: projectInfo,
     columnSource: info.source,
     views: effectiveViews(snap.config, project.key),
+    epicColumns: effectiveEpicColumns(snap.config, project.key),
     columns,
     epics: own
       .filter((i) => i.fm.type === 'epic')

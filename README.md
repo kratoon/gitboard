@@ -153,6 +153,7 @@ columns:
   - id: done
     done: true            # finished work
 views: [kanban, backlog]  # the views offered; the first is the default
+epicColumns: [key, title, status]  # columns of an epic's child-issue table
 projects:
   - key: WEB
     name: Website
@@ -172,7 +173,9 @@ Columns resolve project, then repository, then the built-in `todo / in-progress 
 the layer below. A column can carry `done: true` to mark finished work: the backlog hides done columns and epic
 progress counts them. If no column says anything, the last one is done. Views are configured the same way with a
 `views` list (`kanban`, `backlog`; the first is the default); the built-in default offers both. Your last choice
-of view is remembered in the browser, not in the repository.
+of view is remembered in the browser, not in the repository. The child issues in an epic's detail are shown as a
+table whose columns come from an `epicColumns` list (`key`, `title`, `status`, `priority`, `labels`), resolved
+project, then repository, then the built-in `key, title, status`; edit the config file to change it.
 
 Updates keep the file's format, and YAML comments and layout are preserved. `gitboard config convert` switches a
 repository to the other format (`--to json`, or `--to yaml` which is the default); comments do not survive a

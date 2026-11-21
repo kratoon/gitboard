@@ -1,13 +1,15 @@
 import { ActionMenu } from './ActionMenu';
 import { InlineSelect } from './InlineSelect';
 import { CopyButton } from './CopyButton';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Board, IssueDetail } from '../core/types';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import type { Board, EpicColumnId, IssueDetail } from '../core/types';
 import { api } from './api';
 import { ApiError } from './client';
 import { DeleteIssueDialog, errorMessage } from './Dialogs';
 import { LinkedText, internalClick, useLinks } from './links';
 import { Markdown } from './markdown';
+
+const EPIC_COLUMN_LABELS: Record<EpicColumnId, string> = { key: 'Key', title: 'Title', status: 'Status', priority: 'Priority', labels: 'Labels' };
 
 interface Props {
   /** `drawer` is the side panel; `page` shows the same content as the issue's own page (FEAT-130c757). */
@@ -112,6 +114,7 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   }
 
   const columns = board?.columns ?? [];
+  const epicColumns: EpicColumnId[] = board?.epicColumns ?? ['key', 'title', 'status'];
   const statusKnown = columns.some((c) => c.id === issue.status);
   const epics = (board?.epics ?? []).filter((e) => e.id !== issue.id);
   const editing = draft !== null;
@@ -273,22 +276,39 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
                 <div style={{ width: issue.progress.total === 0 ? '0%' : `${(100 * issue.progress.done) / issue.progress.total}%` }} />
               </div>
               <p className="muted">{issue.progress.done} of {issue.progress.total} done</p>
-              <ul className="children">
+              <table className="children-table">
+              <thead>
+                <tr>
+                  {epicColumns.map((id) => (
+                    <th key={id}>{EPIC_COLUMN_LABELS[id]}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
                 {(issue.children ?? []).map((child) => {
-                const path = links?.resolve(child.ref) ?? null;
-                return (
-                  <li key={child.id}>
-                    {path !== null && links ? (
-                      <a className="ref issue-key" href={path} onClick={internalClick(links, path)}>{child.ref}</a>
-                    ) : (
-                      <span className="ref">{child.ref}</span>
-                    )}{' '}
-                    <LinkedText text={child.title} />{' '}
-                    <span className="chip">{child.status}</span>
-                  </li>
-                );
-              })}
-            </ul>
+                  const path = links?.resolve(child.ref) ?? null;
+                  const cell: Record<EpicColumnId, ReactNode> = {
+                    key:
+                      path !== null && links ? (
+                        <a className="ref issue-key" href={path} onClick={internalClick(links, path)}>{child.ref}</a>
+                      ) : (
+                        <span className="ref">{child.ref}</span>
+                      ),
+                    title: <LinkedText text={child.title} />,
+                    status: <span className="chip">{columns.find((c) => c.id === child.status)?.name ?? child.status}</span>,
+                    priority: child.priority ? <span className={`badge priority-${child.priority}`}>{child.priority}</span> : null,
+                    labels: child.labels.length > 0 ? <div className="chip-row">{child.labels.map((label) => <span key={label} className="chip">{label}</span>)}</div> : null,
+                  };
+                  return (
+                    <tr key={child.id}>
+                      {epicColumns.map((id) => (
+                        <td key={id} className={`col-${id}`}>{cell[id]}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
               </section>
           )}
 
