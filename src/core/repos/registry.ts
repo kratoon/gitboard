@@ -15,9 +15,11 @@ import {
   registryPath,
   writeRegistryText,
 } from '../storage/registry-file';
+import { loadConfig } from '../projects/config';
 import { findRepoRoot, isInitialized, openRepo, pathIsDirectory, type Repo } from '../storage/repo-files';
 import type { RepoInfo } from '../types';
 import { assertSshUrl, isRemoteUrl, repoNameFromUrl } from './remote';
+import { assignSlugs, parseOrigin, type SlugInfo } from './slug';
 
 const EntrySchema = z.object({
   id: z.string(),
@@ -60,24 +62,58 @@ function uniqueName(registry: Registry, wanted: string): string {
   return name;
 }
 
+async function slugInput(entry: RegistryEntry, initialized: boolean) {
+  let originUrl = entry.remoteUrl;
+  try {
+    originUrl = (await runGit(entry.path, ['config', '--get', 'remote.origin.url'])).stdout.trim() || originUrl;
+  } catch {
+    /* no origin, or not a git repository */
+  }
+  let configId: string | undefined;
+  if (initialized) {
+    try {
+      configId = (await loadConfig({ root: entry.path })).config.id;
+    } catch {
+      /* an invalid config is reported where it is used */
+    }
+  }
+  return { id: entry.id, origin: originUrl ? (parseOrigin(originUrl) ?? undefined) : undefined, configId };
+}
+
+/** Builds the info for every registry entry; slugs depend on the other entries (provider conflicts). */
+async function toInfos(registry: Registry): Promise<RepoInfo[]> {
+  const partial = await Promise.all(
+    registry.repos.map(async (entry) => {
+      const exists = await pathIsDirectory(entry.path);
+      const initialized = exists ? await isInitialized({ root: entry.path }) : false;
+      return { entry, exists, initialized, input: await slugInput(entry, initialized) };
+    }),
+  );
+  const slugs = assignSlugs(partial.map((p) => p.input));
+  return partial.map(({ entry, exists, initialized }) => {
+    const slug = slugs.get(entry.id) as SlugInfo;
+    return {
+      id: entry.id,
+      name: entry.name,
+      path: entry.path,
+      source: entry.source,
+      ...(entry.remoteUrl !== undefined ? { remoteUrl: entry.remoteUrl } : {}),
+      initialized,
+      exists,
+      isDefault: registry.defaultRepo === entry.id,
+      ...slug,
+    };
+  });
+}
+
 async function toInfo(entry: RegistryEntry, registry: Registry): Promise<RepoInfo> {
-  const exists = await pathIsDirectory(entry.path);
-  const initialized = exists ? await isInitialized({ root: entry.path }) : false;
-  return {
-    id: entry.id,
-    name: entry.name,
-    path: entry.path,
-    source: entry.source,
-    ...(entry.remoteUrl !== undefined ? { remoteUrl: entry.remoteUrl } : {}),
-    initialized,
-    exists,
-    isDefault: registry.defaultRepo === entry.id,
-  };
+  const infos = await toInfos(registry);
+  return infos.find((i) => i.id === entry.id) as RepoInfo;
 }
 
 export async function listRepos(): Promise<RepoInfo[]> {
   const registry = await readRegistry();
-  return Promise.all(registry.repos.map((entry) => toInfo(entry, registry)));
+  return toInfos(registry);
 }
 
 async function gitTopLevel(dir: string): Promise<string> {

@@ -6,6 +6,10 @@
  * operation inputs.
  */
 import { z } from 'zod';
+import { REPO_SLUG_PATTERN } from './repos/slug';
+
+// Pure helpers the web app needs (types.ts is its only core import).
+export { resolveSlug, type SlugMatch } from './repos/slug';
 
 export const ID_PATTERN = /^[0-9a-f]{12}$/;
 export const PROJECT_KEY_PATTERN = /^[A-Z][A-Z0-9]{1,9}$/;
@@ -74,6 +78,8 @@ export const ProjectDefSchema = z
 export const RepoConfigSchema = z
   .object({
     version: z.literal(1).default(1),
+    /** Portable repository id for web URLs; needed only when the repository has no `origin` (FEAT-130c757). */
+    id: z.string().trim().regex(REPO_SLUG_PATTERN, 'must be lowercase letters, digits, dots, dashes and slashes').optional(),
     columns: ColumnsSchema.optional(),
     views: StoredViewsSchema.optional(),
     projects: z.array(ProjectDefSchema).default([]),
@@ -361,6 +367,11 @@ export interface RepoInfo {
   initialized: boolean;
   exists: boolean;
   isDefault: boolean;
+  /** Portable URL path of the repository: `owner/name`, `provider/owner/name` on a conflict, or the config id. */
+  slug: string;
+  slugBase: string;
+  provider?: string;
+  slugSource: 'config' | 'origin' | 'registry';
 }
 
 export interface GitStatus {
