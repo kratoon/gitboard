@@ -19,10 +19,9 @@ interface Props {
   tick: number;
   onClose: () => void;
   onChanged: () => void;
-  onFilterEpic: (id: string) => void;
 }
 
-export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, onClose, onChanged, onFilterEpic }: Props) {
+export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, onClose, onChanged }: Props) {
   const links = useLinks();
   const page = variant === 'page';
   const shell = page ? 'drawer issue-page' : 'drawer';
@@ -293,8 +292,7 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
                 );
               })}
             </ul>
-              <button onClick={() => onFilterEpic(issue.id)}>Show only these on the board</button>
-            </section>
+              </section>
           )}
 
           {issue.checklist.length > 0 && (
