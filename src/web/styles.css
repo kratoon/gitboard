@@ -286,7 +286,7 @@ ul.plain { list-style: none; padding: 0; margin: 0 0 12px; }
 
 /* An issue on its own page: the drawer content in a centred column instead of a side panel. */
 .drawer.issue-page {
-  position: static; width: min(820px, 100%); margin: 16px auto; border: 1px solid var(--border); border-radius: 10px;
+  position: static; width: min(1080px, 100% - 32px); margin: 16px auto; border: 1px solid var(--border); border-radius: 10px;
   box-shadow: none; z-index: auto;
 }
 
@@ -299,3 +299,14 @@ ul.plain { list-style: none; padding: 0; margin: 0 0 12px; }
 .action-menu .menu button { border: 0; background: transparent; text-align: left; padding: 7px 10px; border-radius: 6px; }
 .action-menu .menu button:hover { background: var(--surface-2); }
 .action-menu .menu button.danger-text { color: var(--danger); }
+
+.contents { display: contents; }
+/* Issue page: description on the left, status, priority, epic and labels in a side panel. */
+.page-body { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 24px; align-items: start; }
+.page-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.page-side { display: flex; flex-direction: column; gap: 14px; border-left: 1px solid var(--border); padding-left: 18px; }
+.page-side .fields { grid-template-columns: 1fr; }
+@media (max-width: 760px) {
+  .page-body { grid-template-columns: 1fr; }
+  .page-side { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 14px; }
+}
