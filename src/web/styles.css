@@ -250,7 +250,7 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: 
 .bl-header .chevron { width: 12px; color: var(--muted); }
 .bl-rows { padding: 0 8px 10px; display: flex; flex-direction: column; gap: 4px; }
 .row {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; gap: 10px; align-items: center;
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto auto; gap: 10px; align-items: center;
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; touch-action: none;
 }
 .row:hover { border-color: var(--accent); }
@@ -272,3 +272,11 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: 
   .row { grid-template-columns: auto minmax(0, 1fr); }
   .row-meta, .row-select { grid-column: 1 / -1; max-width: none; }
 }
+
+.copy-btn { border: none; background: none; padding: 0 4px; color: var(--muted); font-size: 12px; line-height: 1.4; border-radius: 4px; cursor: pointer; }
+.copy-btn:hover, .copy-btn:focus-visible { color: var(--accent); background: var(--surface-2); }
+.card .copy-btn, .row .copy-btn { opacity: 0; }
+.card:hover .copy-btn, .card:focus-within .copy-btn, .row:hover .copy-btn, .row:focus-within .copy-btn, .card .copy-btn:focus-visible, .row .copy-btn:focus-visible { opacity: 1; }
+.copy-btn.with-text { border: 1px solid var(--border); padding: 1px 8px; }
+.card-top { justify-content: flex-start; }
+.card-top .badge { margin-left: auto; }
