@@ -5,8 +5,9 @@ status: todo
 project: FEAT
 type: story
 labels: []
-parent: cd25599aa801
+parent: 43d54b1ea488
 createdAt: 2026-11-21T18:01:16.192Z
+updatedAt: 2026-11-21T19:43:01.501Z
 ---
 
 - **Goal:** only what measurements justify.
