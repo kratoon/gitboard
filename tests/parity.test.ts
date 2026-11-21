@@ -89,7 +89,9 @@ async function freshRepo(): Promise<string> {
   return root;
 }
 
-const normalise = (value: unknown, root: string): unknown => JSON.parse(JSON.stringify(value ?? null).split(root).join('<root>'));
+// The root is JSON-escaped (backslashes doubled on Windows), so replace that form.
+const normalise = (value: unknown, root: string): unknown =>
+  JSON.parse(JSON.stringify(value ?? null).split(JSON.stringify(root).slice(1, -1)).join('<root>'));
 
 async function viaCore(root: string): Promise<Outcome[]> {
   const results: Outcome[] = [];
