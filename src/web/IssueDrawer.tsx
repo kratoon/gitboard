@@ -127,7 +127,7 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
         <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
         <span className={`chip ${issue.type === 'epic' ? 'epic' : ''}`}>{issue.type}</span>
         <span className="spacer" />
-        <button onClick={onClose} aria-label={page ? 'Back to the board' : 'Close'}>{page ? '← Back' : '✕'}</button>
+        {!page && <button onClick={onClose} aria-label="Close">✕</button>}
       </header>
 
       {(conflict || externalChange) && (

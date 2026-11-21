@@ -256,7 +256,16 @@ export function App() {
 
   const header = (
     <header className="topbar">
-      <div className="brand">
+      <a
+        className="brand"
+        href={repo ? repoPath(repo.slug) : '/'}
+        title="Back to the board"
+        onClick={(e) => {
+          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          navigate(repo ? repoPath(repo.slug) : '/');
+        }}
+      >
         <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
           <rect width="32" height="32" rx="7" fill="var(--accent)" />
           <rect x="6" y="7" width="5" height="18" rx="1.5" fill="#fff" />
@@ -264,7 +273,7 @@ export function App() {
           <rect x="21" y="7" width="5" height="8" rx="1.5" fill="#fff" />
         </svg>
         Gitboard
-      </div>
+      </a>
       <div className="repo-picker">
         <select
           aria-label="Repository"
