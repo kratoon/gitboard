@@ -6,7 +6,7 @@ import type { Board, IssueDetail } from '../core/types';
 import { api } from './api';
 import { ApiError } from './client';
 import { DeleteIssueDialog, errorMessage } from './Dialogs';
-import { internalClick, useLinks } from './links';
+import { LinkedText, internalClick, useLinks } from './links';
 import { Markdown } from './markdown';
 
 interface Props {
@@ -279,14 +279,11 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
                 return (
                   <li key={child.id}>
                     {path !== null && links ? (
-                      <a className="child-link" href={path} onClick={internalClick(links, path)}>
-                        <span className="ref issue-key">{child.ref}</span> {child.title}
-                      </a>
+                      <a className="ref issue-key" href={path} onClick={internalClick(links, path)}>{child.ref}</a>
                     ) : (
-                      <>
-                        <span className="ref">{child.ref}</span> {child.title}
-                      </>
+                      <span className="ref">{child.ref}</span>
                     )}{' '}
+                    <LinkedText text={child.title} />{' '}
                     <span className="chip">{child.status}</span>
                   </li>
                 );
