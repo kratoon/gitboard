@@ -4,10 +4,9 @@ title: "Board columns: per repo or per project?"
 status: done
 project: FEAT
 type: story
-labels:
-  - question
+labels: []
 createdAt: 2026-11-14T14:43:16.192Z
-updatedAt: 2026-11-17T13:45:51.922Z
+updatedAt: 2026-11-21T16:37:15.081Z
 rank: a8
 ---
 

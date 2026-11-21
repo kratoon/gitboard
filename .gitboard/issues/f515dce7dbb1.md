@@ -4,11 +4,10 @@ title: Is `project` required on every issue?
 status: done
 project: FEAT
 type: story
-labels:
-  - question
+labels: []
 createdAt: 2026-11-14T14:43:15.968Z
 rank: a6
-updatedAt: 2026-11-17T13:45:52.210Z
+updatedAt: 2026-11-21T16:37:15.601Z
 ---
 
 - **Question:** Must every issue carry `project: KEY`, or may it be omitted (unassigned)?
