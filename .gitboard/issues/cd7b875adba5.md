@@ -4,10 +4,9 @@ title: Custom and saved views
 status: todo
 project: FEAT
 type: story
-labels:
-  - question deferred
+labels: []
 createdAt: 2026-11-14T14:43:17.247Z
-updatedAt: 2026-11-17T13:45:51.779Z
+updatedAt: 2026-11-21T16:37:15.732Z
 ---
 
 - **Question:** Should users define their own views (a saved filter, a grouping, a column subset) in
