@@ -6,7 +6,7 @@ import type { Board, IssueDetail } from '../core/types';
 import { api } from './api';
 import { ApiError } from './client';
 import { DeleteIssueDialog, errorMessage } from './Dialogs';
-import { LinkedText, internalClick, useLinks } from './links';
+import { internalClick, useLinks } from './links';
 import { Markdown } from './markdown';
 
 interface Props {
@@ -275,12 +275,24 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
               </div>
               <p className="muted">{issue.progress.done} of {issue.progress.total} done</p>
               <ul className="children">
-                {(issue.children ?? []).map((child) => (
+                {(issue.children ?? []).map((child) => {
+                const path = links?.resolve(child.ref) ?? null;
+                return (
                   <li key={child.id}>
-                    <span className="ref">{child.ref}</span> <LinkedText text={child.title} /> <span className="chip">{child.status}</span>
+                    {path !== null && links ? (
+                      <a className="child-link" href={path} onClick={internalClick(links, path)}>
+                        <span className="ref issue-key">{child.ref}</span> {child.title}
+                      </a>
+                    ) : (
+                      <>
+                        <span className="ref">{child.ref}</span> {child.title}
+                      </>
+                    )}{' '}
+                    <span className="chip">{child.status}</span>
                   </li>
-                ))}
-              </ul>
+                );
+              })}
+            </ul>
               <button onClick={() => onFilterEpic(issue.id)}>Show only these on the board</button>
             </section>
           )}
