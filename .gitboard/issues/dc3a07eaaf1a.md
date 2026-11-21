@@ -1,12 +1,12 @@
 ---
 id: dc3a07eaaf1a
 title: Reads use the clone's files; a tree-keyed snapshot cache is introduced only on measured need
-status: proposed
+status: accepted
 project: ADR
 type: story
 labels: []
 createdAt: 2026-11-21T17:20:11.925Z
-updatedAt: 2026-11-21T20:53:18.967Z
+updatedAt: 2026-11-21T21:03:38.316Z
 ---
 
 - **Date:** 2026-11-21
