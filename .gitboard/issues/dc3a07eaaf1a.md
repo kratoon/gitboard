@@ -11,7 +11,6 @@ updatedAt: 2026-11-21T17:46:54.620Z
 
 - **Date:** 2026-11-21
 - **Related:** FEAT-8c2e32c, ADR-0495ea1, ADR-9eb2543, ADR-82e7ef1, ADR-3f39a2f
-- **Documents:** docs/architecture/hosted/02-proposed-architecture.md §3.1
 
 ## Context
 
@@ -42,13 +41,13 @@ Bounded staleness with explicit labelling keeps reads fast and honest; writes ca
 
 ## Consequences
 
-- Snapshot memory is proportional to total issue text on hot repositories: about 2-3x raw bytes [E]; with a 20 GB cache budget, on the order of 10^4 repositories of 1k issues stay warm per node pair (model in the scalability document).
+- Snapshot memory is proportional to total issue text on hot repositories: about 2-3x raw bytes [E]; with a 20 GB cache budget, on the order of 10^4 repositories of 1k issues stay warm per node pair (model in FEAT-84505b0 (capacity model)).
 - A read can be up to `T_fresh` behind the remote; users see their own writes immediately because the writer updates the snapshot.
 - First load of a large repo is O(issues) blob reads and parses.
 
 ## Scalability implications
 
-Warm read cost is O(issues) for `board.get` (assembly) and O(1) for `issue.get` once indexed by id; assembly can itself be memoised per snapshot and project. Cross-repository aggregation multiplies cold starts (OQ-12).
+Warm read cost is O(issues) for `board.get` (assembly) and O(1) for `issue.get` once indexed by id; assembly can itself be memoised per snapshot and project. Cross-repository aggregation multiplies cold starts (FEAT-61ef959).
 
 ## Open questions
 
