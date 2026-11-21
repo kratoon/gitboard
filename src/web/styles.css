@@ -289,3 +289,13 @@ ul.plain { list-style: none; padding: 0; margin: 0 0 12px; }
   position: static; width: min(820px, 100%); margin: 16px auto; border: 1px solid var(--border); border-radius: 10px;
   box-shadow: none; z-index: auto;
 }
+
+.confirm { margin: 10px 14px 0; }
+.action-menu { position: relative; }
+.action-menu .menu {
+  position: absolute; right: 0; top: calc(100% + 4px); min-width: 170px; z-index: 30; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / 18%); padding: 4px;
+}
+.action-menu .menu button { border: 0; background: transparent; text-align: left; padding: 7px 10px; border-radius: 6px; }
+.action-menu .menu button:hover { background: var(--surface-2); }
+.action-menu .menu button.danger-text { color: var(--danger); }

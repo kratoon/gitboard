@@ -1,3 +1,4 @@
+import { ActionMenu } from './ActionMenu';
 import { CopyButton } from './CopyButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Board, IssueDetail } from '../core/types';
@@ -127,6 +128,7 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
         <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
         <span className={`chip ${issue.type === 'epic' ? 'epic' : ''}`}>{issue.type}</span>
         <span className="spacer" />
+        <ActionMenu actions={[{ label: 'Delete issue…', danger: true, onSelect: () => setConfirmDelete(true) }]} />
         {!page && <button onClick={onClose} aria-label="Close">✕</button>}
       </header>
 
@@ -148,6 +150,31 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
         </div>
       )}
       {error && <div className="banner error-banner">{error}</div>}
+      {confirmDelete && (
+        <div className="confirm">
+          <p>Delete this issue? Its Markdown file is removed.</p>
+          {(issue.children?.length ?? 0) > 0 && (
+            <label>
+              <input type="checkbox" checked={unlink} onChange={(e) => setUnlink(e.target.checked)} /> Detach its {issue.children?.length} child issue(s)
+            </label>
+          )}
+          <div className="actions">
+            <button onClick={() => setConfirmDelete(false)}>Cancel</button>
+            <button
+              className="danger"
+              onClick={async () => {
+                const ok = await guarded(() => api.deleteIssue(repoId, issue.id, unlink));
+                if (ok) {
+                  onChanged();
+                  onClose();
+                }
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="drawer-body">
         <input
@@ -305,33 +332,6 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
             id {issue.id} · created {new Date(issue.createdAt).toLocaleString()}
             {issue.updatedAt ? ` · updated ${new Date(issue.updatedAt).toLocaleString()}` : ''}
           </span>
-          {!confirmDelete ? (
-            <button className="danger-outline" onClick={() => setConfirmDelete(true)}>Delete…</button>
-          ) : (
-            <div className="confirm">
-              <p>Delete this issue? Its Markdown file is removed.</p>
-              {(issue.children?.length ?? 0) > 0 && (
-                <label>
-                  <input type="checkbox" checked={unlink} onChange={(e) => setUnlink(e.target.checked)} /> Detach its {issue.children?.length} child issue(s)
-                </label>
-              )}
-              <div className="actions">
-                <button onClick={() => setConfirmDelete(false)}>Cancel</button>
-                <button
-                  className="danger"
-                  onClick={async () => {
-                    const ok = await guarded(() => api.deleteIssue(repoId, issue.id, unlink));
-                    if (ok) {
-                      onChanged();
-                      onClose();
-                    }
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          )}
         </footer>
       </div>
     </aside>
