@@ -1,4 +1,5 @@
 import { ActionMenu } from './ActionMenu';
+import { InlineSelect } from './InlineSelect';
 import { CopyButton } from './CopyButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Board, IssueDetail } from '../core/types';
@@ -32,6 +33,7 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   const [externalChange, setExternalChange] = useState(false);
   const [title, setTitle] = useState('');
   const [labelInput, setLabelInput] = useState('');
+  const [addingLabel, setAddingLabel] = useState(false);
   const [draft, setDraft] = useState<string | null>(null); // body being edited
   const [confirmDelete, setConfirmDelete] = useState(false);
   const draftBase = useRef<string | null>(null);
@@ -116,38 +118,35 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   const editing = draft !== null;
   const pagePath = links?.resolve(issue.ref) ?? null;
 
+  const statusOptions = [
+    ...(statusKnown ? [] : [{ value: issue.status, label: `${issue.status} (unknown)` }]),
+    ...columns.map((c) => ({ value: c.id, label: c.name })),
+  ];
+  const priorityOptions = [
+    { value: '', label: '(none)' },
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+    { value: 'urgent', label: 'Urgent' },
+  ];
+  const epicOptions = [{ value: '', label: '(none)' }, ...epics.map((e) => ({ value: e.id, label: e.title }))];
   const fieldsPanel = (
     <>
       <div className="fields">
-        <label>
-          Status
-          <select value={issue.status} onChange={(e) => void save({ status: e.target.value })}>
-            {!statusKnown && <option value={issue.status}>{issue.status} (unknown)</option>}
-            {columns.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Priority
-          <select value={issue.priority ?? ''} onChange={(e) => void save({ priority: e.target.value === '' ? null : e.target.value })}>
-            <option value="">(none)</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
-        </label>
+        <InlineSelect label="Status" value={issue.status} options={statusOptions} onChange={(value) => void save({ status: value })} />
+        <InlineSelect
+          label="Priority"
+          value={issue.priority ?? ''}
+          options={priorityOptions}
+          onChange={(value) => void save({ priority: value === '' ? null : value })}
+        />
         {issue.type === 'story' && (
-          <label>
-            Epic
-            <select value={issue.parent ?? ''} onChange={(e) => void save({ parent: e.target.value === '' ? null : e.target.value })}>
-              <option value="">(none)</option>
-              {epics.map((epic) => (
-                <option key={epic.id} value={epic.id}>{epic.title}</option>
-              ))}
-            </select>
-          </label>
+          <InlineSelect
+            label="Epic"
+            value={issue.parent ?? ''}
+            options={epicOptions}
+            onChange={(value) => void save({ parent: value === '' ? null : value })}
+          />
         )}
       </div>
 
@@ -158,20 +157,33 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
             <button aria-label={`Remove label ${label}`} onClick={() => void save({ removeLabels: [label] })}>×</button>
           </span>
         ))}
-        <input
-          className="label-input"
-          placeholder="Add label…"
-          value={labelInput}
-          onChange={(e) => setLabelInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && labelInput.trim() !== '') {
-              void save({ addLabels: [labelInput.trim()] });
+        {addingLabel ? (
+          <input
+            className="label-input"
+            placeholder="Label name"
+            aria-label="New label"
+            autoFocus
+            value={labelInput}
+            onChange={(e) => setLabelInput(e.target.value)}
+            onBlur={() => {
+              setAddingLabel(false);
               setLabelInput('');
-            }
-          }}
-        />
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && labelInput.trim() !== '') {
+                void save({ addLabels: [labelInput.trim()] });
+                setLabelInput('');
+                setAddingLabel(false);
+              } else if (e.key === 'Escape') {
+                setAddingLabel(false);
+                setLabelInput('');
+              }
+            }}
+          />
+        ) : (
+          <button type="button" className="chip add-chip" onClick={() => setAddingLabel(true)}>+ Add label</button>
+        )}
       </div>
-
     </>
   );
   const metaPanel = (
