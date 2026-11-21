@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Board, IssueDetail } from '../core/types';
 import { api } from './api';
 import { ApiError } from './client';
-import { errorMessage } from './Dialogs';
+import { DeleteIssueDialog, errorMessage } from './Dialogs';
 import { LinkedText, internalClick, useLinks } from './links';
 import { Markdown } from './markdown';
 
@@ -34,7 +34,6 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   const [labelInput, setLabelInput] = useState('');
   const [draft, setDraft] = useState<string | null>(null); // body being edited
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [unlink, setUnlink] = useState(false);
   const draftBase = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -66,11 +65,11 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) onClose();
+      if (event.key === 'Escape' && !confirmDelete && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, confirmDelete]);
 
   async function guarded(action: () => Promise<unknown>): Promise<boolean> {
     setError(null);
@@ -151,29 +150,21 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
       )}
       {error && <div className="banner error-banner">{error}</div>}
       {confirmDelete && (
-        <div className="confirm">
-          <p>Delete this issue? Its Markdown file is removed.</p>
-          {(issue.children?.length ?? 0) > 0 && (
-            <label>
-              <input type="checkbox" checked={unlink} onChange={(e) => setUnlink(e.target.checked)} /> Detach its {issue.children?.length} child issue(s)
-            </label>
-          )}
-          <div className="actions">
-            <button onClick={() => setConfirmDelete(false)}>Cancel</button>
-            <button
-              className="danger"
-              onClick={async () => {
-                const ok = await guarded(() => api.deleteIssue(repoId, issue.id, unlink));
-                if (ok) {
-                  onChanged();
-                  onClose();
-                }
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
+        <DeleteIssueDialog
+          issueRef={issue.ref}
+          title={issue.title}
+          childCount={issue.children?.length ?? 0}
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={async (unlinkChildren) => {
+            const ok = await guarded(() => api.deleteIssue(repoId, issue.id, unlinkChildren));
+            if (ok) {
+              onChanged();
+              onClose();
+            } else {
+              setConfirmDelete(false); // the error or conflict banner explains why
+            }
+          }}
+        />
       )}
 
       <div className="drawer-body">
