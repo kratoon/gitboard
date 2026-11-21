@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import { normalizeMarkdown } from './markdown-normalize';
 
 /**
  * Issue content is untrusted (ADR-b9d4018): raw HTML is never rendered (react-markdown ignores it) and the
@@ -17,7 +18,7 @@ export function Markdown({ source }: { source: string }) {
           input: ({ node: _node, ...props }) => <input {...props} disabled />,
         }}
       >
-        {source}
+        {normalizeMarkdown(source)}
       </ReactMarkdown>
     </div>
   );
