@@ -98,13 +98,6 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
     return (
       <aside className={shell}>
         <header className="drawer-header">
-        {issue.parentIssue &&
-          (parentPath !== null && links ? (
-            <a className="ref issue-key" href={parentPath} title={issue.parentIssue.title} onClick={internalClick(links, parentPath)}>{issue.parentIssue.ref}</a>
-          ) : (
-            <span className="ref" title={issue.parentIssue.title}>{issue.parentIssue.ref}</span>
-          ))}
-        {issue.parentIssue && <span className="ref" aria-hidden="true">/</span>}
           <button onClick={onClose}>Close</button>
         </header>
         <p className="error pad">{loadError}</p>
@@ -206,6 +199,13 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   return (
     <aside className={shell} aria-label="Issue details">
       <header className="drawer-header">
+        {issue.parentIssue &&
+          (parentPath !== null && links ? (
+            <a className="ref issue-key" href={parentPath} title={issue.parentIssue.title} onClick={internalClick(links, parentPath)}>{issue.parentIssue.ref}</a>
+          ) : (
+            <span className="ref" title={issue.parentIssue.title}>{issue.parentIssue.ref}</span>
+          ))}
+        {issue.parentIssue && <span className="ref" aria-hidden="true">/</span>}
         {!page && pagePath !== null && links ? (
           <a className="ref issue-key" href={pagePath} title="Open this issue on its own page" onClick={internalClick(links, pagePath)}>{issue.ref}</a>
         ) : (
