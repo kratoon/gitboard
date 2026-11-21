@@ -1,4 +1,5 @@
 import { CopyButton } from './CopyButton';
+import { LinkedText } from './links';
 import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -65,7 +66,7 @@ function Row({
     >
       <span className="ref">{issue.ref}</span>
       <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
-      <span className="row-title">{issue.title}</span>
+      <span className="row-title"><LinkedText text={issue.title} /></span>
       <span className="row-meta">
         {epicTitle && <span className="chip epic" title="Epic">{epicTitle}</span>}
         {issue.labels.map((label) => (

@@ -3,6 +3,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import type { Board as BoardData, BoardColumn, Issue } from '../core/types';
 import { CopyButton } from './CopyButton';
+import { LinkedText } from './links';
 import { useColumnDnd, type Placement } from './dnd';
 
 export type { Placement } from './dnd';
@@ -25,7 +26,7 @@ function CardBody({ issue, epicTitle }: { issue: Issue; epicTitle: string | unde
         <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
         {issue.priority && <span className={`badge priority-${issue.priority}`}>{issue.priority}</span>}
       </div>
-      <div className="card-title">{issue.title}</div>
+      <div className="card-title"><LinkedText text={issue.title} /></div>
       {(issue.labels.length > 0 || epicTitle || issue.checklist.length > 0) && (
         <div className="card-meta">
           {epicTitle && <span className="chip epic" title="Epic">{epicTitle}</span>}

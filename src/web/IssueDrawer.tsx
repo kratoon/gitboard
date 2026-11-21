@@ -4,20 +4,27 @@ import type { Board, IssueDetail } from '../core/types';
 import { api } from './api';
 import { ApiError } from './client';
 import { errorMessage } from './Dialogs';
+import { LinkedText } from './links';
 import { Markdown } from './markdown';
 
 interface Props {
+  /** `drawer` is the side panel; `page` shows the same content as the issue's own page (FEAT-130c757). */
+  variant?: 'drawer' | 'page';
   repoId: string;
   issueId: string;
   board: Board | undefined;
   /** Increments whenever files change on disk. */
   tick: number;
   onClose: () => void;
+  /** Opens this issue on its own page; receives the issue's reference. */
+  onOpenPage: (ref: string) => void;
   onChanged: () => void;
   onFilterEpic: (id: string) => void;
 }
 
-export function IssueDrawer({ repoId, issueId, board, tick, onClose, onChanged, onFilterEpic }: Props) {
+export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, onClose, onChanged, onOpenPage, onFilterEpic }: Props) {
+  const page = variant === 'page';
+  const shell = page ? 'drawer issue-page' : 'drawer';
   const [issue, setIssue] = useState<IssueDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +95,7 @@ export function IssueDrawer({ repoId, issueId, board, tick, onClose, onChanged, 
 
   if (loadError && !issue) {
     return (
-      <aside className="drawer">
+      <aside className={shell}>
         <header className="drawer-header">
           <button onClick={onClose}>Close</button>
         </header>
@@ -98,7 +105,7 @@ export function IssueDrawer({ repoId, issueId, board, tick, onClose, onChanged, 
   }
   if (!issue) {
     return (
-      <aside className="drawer">
+      <aside className={shell}>
         <p className="pad muted">Loading…</p>
       </aside>
     );
@@ -110,13 +117,14 @@ export function IssueDrawer({ repoId, issueId, board, tick, onClose, onChanged, 
   const editing = draft !== null;
 
   return (
-    <aside className="drawer" aria-label="Issue details">
+    <aside className={shell} aria-label="Issue details">
       <header className="drawer-header">
         <span className="ref">{issue.ref}</span>
         <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
         <span className={`chip ${issue.type === 'epic' ? 'epic' : ''}`}>{issue.type}</span>
         <span className="spacer" />
-        <button onClick={onClose} aria-label="Close">✕</button>
+        {!page && <button onClick={() => onOpenPage(issue.ref)} title="Open this issue on its own page">Open full page</button>}
+        <button onClick={onClose} aria-label={page ? 'Back to the board' : 'Close'}>{page ? '← Back' : '✕'}</button>
       </header>
 
       {(conflict || externalChange) && (
@@ -212,7 +220,7 @@ export function IssueDrawer({ repoId, issueId, board, tick, onClose, onChanged, 
             <ul className="children">
               {(issue.children ?? []).map((child) => (
                 <li key={child.id}>
-                  <span className="ref">{child.ref}</span> {child.title} <span className="chip">{child.status}</span>
+                  <span className="ref">{child.ref}</span> <LinkedText text={child.title} /> <span className="chip">{child.status}</span>
                 </li>
               ))}
             </ul>

@@ -279,3 +279,13 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: 
 .card:hover .copy-btn, .card:focus-within .copy-btn, .row:hover .copy-btn, .row:focus-within .copy-btn, .card .copy-btn:focus-visible, .row .copy-btn:focus-visible { opacity: 1; }
 .card-top { justify-content: flex-start; }
 .card-top .badge { margin-left: auto; }
+
+a.issue-key { font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); text-decoration: none; }
+a.issue-key:hover { text-decoration: underline; }
+ul.plain { list-style: none; padding: 0; margin: 0 0 12px; }
+
+/* An issue on its own page: the drawer content in a centred column instead of a side panel. */
+.drawer.issue-page {
+  position: static; width: min(820px, 100%); margin: 16px auto; border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: none; z-index: auto;
+}
