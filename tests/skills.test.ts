@@ -25,7 +25,7 @@ const exists = (target: string) => lstat(target).then(() => true, () => false);
 
 describe('packaged skill', () => {
   it('has the frontmatter agents need and tells agents to use the CLI', async () => {
-    const text = await readFile(path.join(process.cwd(), 'skills', 'gitboard', 'SKILL.md'), 'utf8');
+    const text = await readFile(path.join(process.cwd(), 'skills', 'gitboard', 'SKILL.md'), 'utf8').then((raw) => raw.replace(/\r\n/g, '\n'));
     expect(text).toMatch(/^---\nname: gitboard\ndescription: .+\n---\n/);
     expect(text).toMatch(/Do not edit, create, rename or delete those files by hand/);
     for (const command of ['issue create', 'issue update', 'issue move', 'issue check', 'issue list', 'validate', '--json']) {
