@@ -114,7 +114,6 @@ export function IssueDrawer({ repoId, issueId, board, tick, onClose, onChanged, 
       <header className="drawer-header">
         <span className="ref">{issue.ref}</span>
         <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
-        <CopyButton value={issue.id} label="Copy full id">Copy id</CopyButton>
         <span className={`chip ${issue.type === 'epic' ? 'epic' : ''}`}>{issue.type}</span>
         <span className="spacer" />
         <button onClick={onClose} aria-label="Close">✕</button>
