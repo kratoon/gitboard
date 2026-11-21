@@ -171,6 +171,18 @@ describe('status transitions', () => {
   });
 });
 
+describe('search', () => {
+  it('finds an issue by its KEY-shortid reference', async () => {
+    const { repo } = await makeRepo();
+    const a = await createIssue(repo, { title: 'alpha' });
+    await createIssue(repo, { title: 'beta' });
+    const ref = `${a.project}-${a.id.slice(0, 7)}`;
+    expect((await listIssues(repo, { q: ref })).map((i) => i.id)).toEqual([a.id]);
+    expect((await listIssues(repo, { q: ref.toUpperCase() })).map((i) => i.id)).toEqual([a.id]);
+    expect((await listIssues(repo, { q: a.id.slice(0, 7) })).map((i) => i.id)).toEqual([a.id]);
+  });
+});
+
 describe('ordering within a column', () => {
   const titles = async (repo: Parameters<typeof listIssues>[0], status = 'todo') =>
     (await listIssues(repo, { status })).map((i) => i.title);

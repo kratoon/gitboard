@@ -179,7 +179,8 @@ export async function listIssues(repo: Repo, filter: IssueListInput = {}, ctx: S
     if (parentId !== undefined && fm.parent !== parentId) return false;
     if (label !== undefined && !fm.labels.some((l) => l.toLowerCase() === label)) return false;
     if (query) {
-      const haystack = `${fm.title}\n${issue.body}\n${issue.id}`.toLowerCase();
+      // `KEY-id` lets a reference of any short length (KEY-6930f51) match, and the key alone matches too.
+      const haystack = `${fm.title}\n${issue.body}\n${issue.id}\n${fm.project}-${issue.id}`.toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     return true;
