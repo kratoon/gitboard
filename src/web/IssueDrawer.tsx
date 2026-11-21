@@ -1,3 +1,4 @@
+import { CopyButton } from './CopyButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Board, IssueDetail } from '../core/types';
 import { api } from './api';
@@ -112,6 +113,7 @@ export function IssueDrawer({ repoId, issueId, board, tick, onClose, onChanged, 
     <aside className="drawer" aria-label="Issue details">
       <header className="drawer-header">
         <span className="ref">{issue.ref}</span>
+        <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
         <span className={`chip ${issue.type === 'epic' ? 'epic' : ''}`}>{issue.type}</span>
         <span className="spacer" />
         <button onClick={onClose} aria-label="Close">✕</button>

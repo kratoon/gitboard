@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Board as BoardData, BoardColumn, Issue } from '../core/types';
+import { CopyButton } from './CopyButton';
 import { useColumnDnd, type Placement } from './dnd';
 
 export type { Placement } from './dnd';
@@ -21,6 +22,7 @@ function CardBody({ issue, epicTitle }: { issue: Issue; epicTitle: string | unde
     <>
       <div className="card-top">
         <span className="ref">{issue.ref}</span>
+        <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
         {issue.priority && <span className={`badge priority-${issue.priority}`}>{issue.priority}</span>}
       </div>
       <div className="card-title">{issue.title}</div>
