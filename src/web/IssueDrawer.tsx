@@ -98,6 +98,13 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
     return (
       <aside className={shell}>
         <header className="drawer-header">
+        {issue.parentIssue &&
+          (parentPath !== null && links ? (
+            <a className="ref issue-key" href={parentPath} title={issue.parentIssue.title} onClick={internalClick(links, parentPath)}>{issue.parentIssue.ref}</a>
+          ) : (
+            <span className="ref" title={issue.parentIssue.title}>{issue.parentIssue.ref}</span>
+          ))}
+        {issue.parentIssue && <span className="ref" aria-hidden="true">/</span>}
           <button onClick={onClose}>Close</button>
         </header>
         <p className="error pad">{loadError}</p>
@@ -117,6 +124,7 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   const epics = (board?.epics ?? []).filter((e) => e.id !== issue.id);
   const editing = draft !== null;
   const pagePath = links?.resolve(issue.ref) ?? null;
+  const parentPath = issue.parentIssue ? (links?.resolve(issue.parentIssue.ref) ?? null) : null;
 
   const statusOptions = [
     ...(statusKnown ? [] : [{ value: issue.status, label: `${issue.status} (unknown)` }]),
