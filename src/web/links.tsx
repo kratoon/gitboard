@@ -1,4 +1,5 @@
 import { createContext, useContext, type MouseEvent, type ReactNode } from 'react';
+import type { IssueType } from '../core/types';
 import type { Navigate } from './route';
 
 /** An issue key such as `FEAT-6930f51`: a project key, a dash and 7 to 12 hex characters of the issue id. */
@@ -10,17 +11,23 @@ export interface ResolvedRef {
   /** The canonical issue key. */
   ref: string;
   title: string;
+  type: IssueType;
 }
 
 export interface Links {
   /** The issue an issue key in text points to, or null when no issue in this repository matches. */
   resolve: (ref: string) => ResolvedRef | null;
+  /** The issue a page path (from `resolve`) belongs to. */
+  byPath: (path: string) => ResolvedRef | null;
   navigate: Navigate;
 }
 
 const LinksContext = createContext<Links | null>(null);
 export const LinksProvider = LinksContext.Provider;
 export const useLinks = () => useContext(LinksContext);
+
+/** Preview links get a border in the colour of the issue's type (epic purple, story green). */
+export const previewClass = (found: ResolvedRef) => `issue-ref issue-preview issue-type-${found.type}`;
 
 /** `FEAT-6930f51: Open an issue on its own page` */
 export const previewText = (found: ResolvedRef) => `${found.ref}: ${found.title}`;
@@ -48,7 +55,7 @@ export function LinkedText({ text }: { text: string }): ReactNode {
     parts.push(
       <a
         key={`${match.index}`}
-        className="issue-ref"
+        className={previewClass(found)}
         href={found.path}
         onPointerDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}

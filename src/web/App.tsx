@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { resolveSlug, type Backlog as BacklogData, type Board as BoardData, type GitStatus, type Issue, type RepoInfo, type ViewId } from '../core/types';
+import { resolveSlug, type Backlog as BacklogData, type Board as BoardData, type GitStatus, type Issue, type IssueType, type RepoInfo, type ViewId } from '../core/types';
 import { api } from './api';
 import { Backlog, type IssuePatch } from './Backlog';
 import { Board } from './Board';
@@ -15,7 +15,7 @@ import {
   errorMessage,
 } from './Dialogs';
 import { IssueDrawer } from './IssueDrawer';
-import { LinksProvider, type Links } from './links';
+import { LinksProvider, type Links, type ResolvedRef } from './links';
 import { applyMove, moveInColumns } from './optimistic';
 import { cameFromApp, issuePath, repoPath, useRoute } from './route';
 
@@ -186,18 +186,21 @@ export function App() {
   // Issue keys found in text link only when they match an issue of this repository.
   const links = useMemo<Links | null>(() => {
     if (!repo || !boards) return null;
-    const issues = new Map<string, Array<{ id: string; ref: string; title: string }>>();
+    const issues = new Map<string, Array<{ id: string; ref: string; title: string; type: IssueType }>>();
+    const byPath = new Map<string, ResolvedRef>();
     for (const b of boards) {
       const all = [...b.columns.flatMap((c) => c.issues), ...b.epics];
-      issues.set(b.project.key, all.map((i) => ({ id: i.id, ref: i.ref, title: i.title })));
+      issues.set(b.project.key, all.map((i) => ({ id: i.id, ref: i.ref, title: i.title, type: i.type })));
+      for (const i of all) byPath.set(issuePath(repo.slug, i.ref), { path: issuePath(repo.slug, i.ref), ref: i.ref, title: i.title, type: i.type });
     }
     return {
       navigate,
       resolve: (text) => {
         const dash = text.indexOf('-');
         const found = issues.get(text.slice(0, dash))?.find((i) => i.id.startsWith(text.slice(dash + 1)));
-        return found ? { path: issuePath(repo.slug, found.ref), ref: found.ref, title: found.title } : null;
+        return found ? { path: issuePath(repo.slug, found.ref), ref: found.ref, title: found.title, type: found.type } : null;
       },
+      byPath: (path) => byPath.get(path) ?? null,
     };
   }, [repo, boards, navigate]);
 

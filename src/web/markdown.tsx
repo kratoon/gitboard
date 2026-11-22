@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
-import { internalClick, remarkIssueRefs, useLinks } from './links';
+import { internalClick, previewClass, remarkIssueRefs, useLinks } from './links';
 import { normalizeMarkdown } from './markdown-normalize';
 
 /**
@@ -19,7 +19,8 @@ export function Markdown({ source }: { source: string }) {
         components={{
           a: ({ node: _node, href, ...props }) => {
             if (links && href !== undefined && href.startsWith('/repos/')) {
-              return <a {...props} href={href} className="issue-ref" onClick={internalClick(links, href)} />;
+              const found = links.byPath(href);
+              return <a {...props} href={href} className={found ? previewClass(found) : 'issue-ref'} onClick={internalClick(links, href)} />;
             }
             return <a {...props} href={href} target="_blank" rel="noopener noreferrer nofollow" />;
           },

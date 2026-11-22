@@ -16,6 +16,9 @@
   --p-high: #d9730d;
   --p-medium: #3b6fd4;
   --p-low: #6b7280;
+  --type-epic: #904ee2;
+  --type-story: #4aa32a;
+  --type-task: #3b9ad9;
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23667085' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5'/%3E%3C/svg%3E");
 }
 
@@ -282,6 +285,11 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: 
 
 a.issue-ref { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
 a.issue-ref:hover { text-decoration: underline; }
+/* A preview link (`KEY: title`) is outlined in the colour of the issue's type. */
+a.issue-preview { border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+a.issue-preview.issue-type-epic { border-color: var(--type-epic); }
+a.issue-preview.issue-type-story { border-color: var(--type-story); }
+a.issue-preview.issue-type-task { border-color: var(--type-task); }
 ul.plain { list-style: none; padding: 0; margin: 0 0 12px; }
 
 /* An issue on its own page: two cards, the content and a side panel, under a plain header. */
