@@ -9,6 +9,21 @@ import { configFile, git, makeRepo, tmpDir, useTestHome } from '../helpers';
 
 useTestHome();
 
+describe('repository slugs', () => {
+  it('derives the slug from origin, then config id, then the registry id', async () => {
+    const withOrigin = await makeRepo();
+    await git(withOrigin.root, 'remote', 'add', 'origin', 'git@github.com:Acme/Api.git');
+    const noOrigin = await makeRepo();
+    const a = await registerRepo(withOrigin.root);
+    const b = await registerRepo(noOrigin.root);
+    expect(a).toMatchObject({ slug: 'acme/api', slugSource: 'origin', provider: 'github' });
+    expect(b).toMatchObject({ slug: `local/${b.id}`, slugSource: 'registry' });
+
+    await writeFile(path.join(noOrigin.root, '.gitboard', 'config.yaml'), 'version: 1\nid: my-repo\nprojects: []\n');
+    expect((await listRepos()).find((r) => r.id === b.id)).toMatchObject({ slug: 'my-repo', slugSource: 'config' });
+  });
+});
+
 describe('project registration', () => {
   it('registers a local repository, lists it, and is idempotent', async () => {
     const { root } = await makeRepo();

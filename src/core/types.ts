@@ -6,6 +6,10 @@
  * operation inputs.
  */
 import { z } from 'zod';
+import { REPO_SLUG_PATTERN } from './repos/slug';
+
+// Pure helpers the web app needs (types.ts is its only core import).
+export { resolveSlug, type SlugMatch } from './repos/slug';
 
 export const ID_PATTERN = /^[0-9a-f]{12}$/;
 export const PROJECT_KEY_PATTERN = /^[A-Z][A-Z0-9]{1,9}$/;
@@ -57,6 +61,11 @@ export const ViewIdSchema = z.enum(VIEW_IDS);
  */
 export const StoredViewsSchema = z.array(z.string().min(1)).min(1, 'at least one view is required');
 
+/** Columns of the child-issue table in an epic's detail (FEAT-130c757). */
+export const EPIC_COLUMN_IDS = ['ref', 'title', 'status', 'priority', 'labels'] as const;
+export type EpicColumnId = (typeof EPIC_COLUMN_IDS)[number];
+export const StoredEpicColumnsSchema = z.array(z.string().min(1)).min(1, 'at least one epic column is required');
+
 // ---------------------------------------------------------------------------------------------
 // Stored data: repo config and issue frontmatter
 // ---------------------------------------------------------------------------------------------
@@ -68,14 +77,18 @@ export const ProjectDefSchema = z
     description: z.string().optional(),
     columns: ColumnsSchema.optional(),
     views: StoredViewsSchema.optional(),
+    epicColumns: StoredEpicColumnsSchema.optional(),
   })
   .passthrough();
 
 export const RepoConfigSchema = z
   .object({
     version: z.literal(1).default(1),
+    /** Portable repository id for web URLs; needed only when the repository has no `origin` (FEAT-130c757). */
+    id: z.string().trim().regex(REPO_SLUG_PATTERN, 'must be lowercase letters, digits, dots, dashes and slashes').optional(),
     columns: ColumnsSchema.optional(),
     views: StoredViewsSchema.optional(),
+    epicColumns: StoredEpicColumnsSchema.optional(),
     projects: z.array(ProjectDefSchema).default([]),
   })
   .passthrough();
@@ -272,7 +285,7 @@ export interface ChecklistItem {
 
 export interface Issue {
   id: string;
-  /** Human-friendly reference: `KEY-<shortest unique prefix, min 7>`. */
+  /** The issue key shown to people: `KEY-<shortest unique prefix, min 7>`. Named `ref` in the API. */
   ref: string;
   title: string;
   status: string;
@@ -297,9 +310,15 @@ export interface EpicProgress {
   done: number;
   byStatus: Record<string, number>;
 }
+/** A child of an epic, with what the epic's child table can show. */
+export interface EpicChild extends IssueSummary {
+  priority?: Priority;
+  labels: string[];
+}
+
 export interface IssueDetail extends Issue {
   parentIssue?: IssueSummary;
-  children?: IssueSummary[];
+  children?: EpicChild[];
   progress?: EpicProgress;
 }
 
@@ -325,6 +344,8 @@ export interface Board {
   project: ProjectInfo;
   columnSource: ColumnSource;
   views: ViewsInfo;
+  /** Columns of the child table in an epic's detail, resolved from the config. */
+  epicColumns: EpicColumnId[];
   columns: BoardColumn[];
   epics: Array<IssueSummary & { progress: EpicProgress }>;
 }
@@ -361,6 +382,11 @@ export interface RepoInfo {
   initialized: boolean;
   exists: boolean;
   isDefault: boolean;
+  /** Portable URL path of the repository: `owner/name`, `provider/owner/name` on a conflict, or the config id. */
+  slug: string;
+  slugBase: string;
+  provider?: string;
+  slugSource: 'config' | 'origin' | 'registry';
 }
 
 export interface GitStatus {

@@ -93,6 +93,42 @@ export function RemoveRepoDialog({ repo, onClose, onRemoved }: { repo: RepoInfo;
   );
 }
 
+export function DeleteIssueDialog({
+  issueRef,
+  title,
+  childCount,
+  onClose,
+  onConfirm,
+}: {
+  issueRef: string;
+  title: string;
+  childCount: number;
+  onClose: () => void;
+  /** Deletes the issue; the caller reports failures itself. */
+  onConfirm: (unlinkChildren: boolean) => Promise<void>;
+}) {
+  const [unlink, setUnlink] = useState(false);
+  const { busy, submit } = useSubmit(() => onConfirm(unlink));
+  return (
+    <Modal title="Delete issue" onClose={onClose}>
+      <form onSubmit={submit}>
+        <p>
+          Delete <strong>{issueRef}</strong> {title}? Its Markdown file is removed. This cannot be undone from Gitboard, but Git keeps the history.
+        </p>
+        {childCount > 0 && (
+          <label>
+            <input type="checkbox" checked={unlink} onChange={(e) => setUnlink(e.target.checked)} /> Detach its {childCount} child issue(s)
+          </label>
+        )}
+        <div className="actions">
+          <button type="button" onClick={onClose}>Cancel</button>
+          <button className="danger" disabled={busy} autoFocus>Delete</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 export function CreateIssueDialog({
   repoId,
   board,

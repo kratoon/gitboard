@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Backlog as BacklogData, Board as BoardData, GitStatus, Issue, RepoInfo, ViewId } from '../core/types';
+import { resolveSlug, type Backlog as BacklogData, type Board as BoardData, type GitStatus, type Issue, type IssueType, type RepoInfo, type ViewId } from '../core/types';
 import { api } from './api';
 import { Backlog, type IssuePatch } from './Backlog';
 import { Board } from './Board';
@@ -15,7 +15,9 @@ import {
   errorMessage,
 } from './Dialogs';
 import { IssueDrawer } from './IssueDrawer';
+import { LinksProvider, type Links, type ResolvedRef } from './links';
 import { applyMove, moveInColumns } from './optimistic';
+import { cameFromApp, issuePath, repoPath, useRoute } from './route';
 
 type DialogName = 'repo' | 'remove' | 'issue' | 'project' | 'columns' | 'views' | null;
 
@@ -46,6 +48,7 @@ const NO_FILTERS: Filters = { q: '', priority: '', label: '', parent: '' };
 
 export function App() {
   const [repos, setRepos] = useState<RepoInfo[] | null>(null);
+  const [route, navigate] = useRoute();
   const [repoId, setRepoId] = useState<string | null>(() => store.get('gitboard.repo'));
   const [boards, setBoards] = useState<BoardData[] | null>(null);
   const [backlogs, setBacklogs] = useState<BacklogData[] | null>(null);
@@ -64,7 +67,12 @@ export function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [showEpics, setShowEpics] = useState(true);
 
-  const repo = useMemo(() => repos?.find((r) => r.id === repoId) ?? repos?.[0], [repos, repoId]);
+  // The URL decides the repository when it names one; otherwise the remembered choice does.
+  const slugMatch = useMemo(() => (route.slug !== null && repos ? resolveSlug(repos, route.slug) : null), [repos, route.slug]);
+  const repo = useMemo(
+    () => (route.slug !== null ? (slugMatch?.kind === 'found' ? slugMatch.repo : undefined) : (repos?.find((r) => r.id === repoId) ?? repos?.[0])),
+    [repos, repoId, route.slug, slugMatch],
+  );
   const ready = repo !== undefined && repo.exists && repo.initialized;
 
   const fail = useCallback((error: unknown) => {
@@ -115,6 +123,11 @@ export function App() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Make the address bar name the repository, so the URL can be shared.
+  useEffect(() => {
+    if (route.slug === null && repo) navigate(repoPath(repo.slug), { replace: true });
+  }, [route.slug, repo?.slug, navigate]);
 
   // Reflect changes made outside the app (agents, editors, git checkout).
   useEffect(() => {
@@ -170,6 +183,32 @@ export function App() {
     return () => window.clearTimeout(handle);
   }, [repo?.id, ready, board?.project.key, filters, filtersActive, tick, fail]);
 
+  // Issue keys found in text link only when they match an issue of this repository.
+  const links = useMemo<Links | null>(() => {
+    if (!repo || !boards) return null;
+    const issues = new Map<string, Array<{ id: string; ref: string; title: string; type: IssueType }>>();
+    const byPath = new Map<string, ResolvedRef>();
+    for (const b of boards) {
+      const all = [...b.columns.flatMap((c) => c.issues), ...b.epics];
+      issues.set(b.project.key, all.map((i) => ({ id: i.id, ref: i.ref, title: i.title, type: i.type })));
+      for (const i of all) byPath.set(issuePath(repo.slug, i.ref), { path: issuePath(repo.slug, i.ref), ref: i.ref, title: i.title, type: i.type });
+    }
+    return {
+      navigate,
+      resolve: (text) => {
+        const dash = text.indexOf('-');
+        const found = issues.get(text.slice(0, dash))?.find((i) => i.id.startsWith(text.slice(dash + 1)));
+        return found ? { path: issuePath(repo.slug, found.ref), ref: found.ref, title: found.title, type: found.type } : null;
+      },
+      byPath: (path) => byPath.get(path) ?? null,
+    };
+  }, [repo, boards, navigate]);
+
+  const closePage = useCallback(() => {
+    if (cameFromApp()) window.history.back();
+    else if (repo) navigate(repoPath(repo.slug));
+  }, [repo, navigate]);
+
   const epicTitles = useMemo(() => new Map((board?.epics ?? []).map((e) => [e.id, e.title])), [board]);
   const labels = useMemo(
     () => [...new Set((board?.columns ?? []).flatMap((c) => c.issues.flatMap((i) => i.labels)))].sort(),
@@ -220,7 +259,16 @@ export function App() {
 
   const header = (
     <header className="topbar">
-      <div className="brand">
+      <a
+        className="brand"
+        href={repo ? repoPath(repo.slug) : '/'}
+        title="Back to the board"
+        onClick={(e) => {
+          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          navigate(repo ? repoPath(repo.slug) : '/');
+        }}
+      >
         <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
           <rect width="32" height="32" rx="7" fill="var(--accent)" />
           <rect x="6" y="7" width="5" height="18" rx="1.5" fill="#fff" />
@@ -228,12 +276,16 @@ export function App() {
           <rect x="21" y="7" width="5" height="8" rx="1.5" fill="#fff" />
         </svg>
         Gitboard
-      </div>
+      </a>
       <div className="repo-picker">
         <select
           aria-label="Repository"
           value={repo?.id ?? ''}
-          onChange={(e) => setRepoId(e.target.value)}
+          onChange={(e) => {
+            const next = repos?.find((r) => r.id === e.target.value);
+            setRepoId(e.target.value);
+            if (next) navigate(repoPath(next.slug));
+          }}
           disabled={!repos || repos.length === 0}
         >
           {(repos ?? []).map((r) => (
@@ -273,7 +325,7 @@ export function App() {
             onAdded={(added) => {
               setDialog(null);
               setRepoId(added.id);
-              void refreshRepos();
+              void refreshRepos().then(() => navigate(repoPath(added.slug)));
             }}
           />
         )}
@@ -282,9 +334,32 @@ export function App() {
   }
 
   return (
+    <LinksProvider value={links}>
     <div className="app">
       {header}
       {toast && <div className="toast" role="alert">{toast}</div>}
+
+      {route.slug !== null && !repo && (
+        <main className="welcome">
+          {slugMatch?.kind === 'ambiguous' ? (
+            <>
+              <h1>{route.slug} matches several repositories</h1>
+              <p>Use the provider in the address, for example:</p>
+              <ul className="plain">
+                {slugMatch.repos.map((r) => (
+                  <li key={r.id}><a href={repoPath(r.slug)} onClick={(e) => { e.preventDefault(); navigate(repoPath(r.slug)); }}>{r.slug}</a> <span className="muted">({r.path})</span></li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <>
+              <h1>Repository not found</h1>
+              <p>No repository registered in Gitboard has the address <code>{route.slug}</code>. Add it with <em>Add repository</em>, then open the link again.</p>
+            </>
+          )}
+          <button onClick={() => navigate('/', { replace: true })}>Go to my repositories</button>
+        </main>
+      )}
 
       {repo && !repo.exists && (
         <main className="welcome">
@@ -308,7 +383,19 @@ export function App() {
         </main>
       )}
 
-      {ready && repo && (
+      {ready && repo && route.ref !== null && (
+        <IssueDrawer
+          variant="page"
+          repoId={repo.id}
+          issueId={route.ref}
+          board={board}
+          tick={tick}
+          onClose={closePage}
+          onChanged={() => void reload()}
+        />
+      )}
+
+      {ready && repo && route.ref === null && (
         <>
           <div className="toolbar">
             <nav className="tabs" aria-label="Projects">
@@ -443,10 +530,6 @@ export function App() {
               tick={tick}
               onClose={() => setOpenId(null)}
               onChanged={() => void reload()}
-              onFilterEpic={(id) => {
-                setFilters({ ...NO_FILTERS, parent: id });
-                setOpenId(null);
-              }}
             />
           )}
         </>
@@ -458,7 +541,7 @@ export function App() {
           onAdded={(added) => {
             setDialog(null);
             setRepoId(added.id);
-            void refreshRepos();
+            void refreshRepos().then(() => navigate(repoPath(added.slug)));
           }}
         />
       )}
@@ -469,6 +552,7 @@ export function App() {
           onRemoved={() => {
             setDialog(null);
             setRepoId(null);
+            navigate('/', { replace: true });
             void refreshRepos();
           }}
         />
@@ -503,5 +587,6 @@ export function App() {
         <ColumnsDialog repoId={repo.id} board={board} onClose={() => setDialog(null)} onSaved={() => void reload()} />
       )}
     </div>
+    </LinksProvider>
   );
 }

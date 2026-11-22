@@ -16,6 +16,9 @@
   --p-high: #d9730d;
   --p-medium: #3b6fd4;
   --p-low: #6b7280;
+  --type-epic: #904ee2;
+  --type-story: #4aa32a;
+  --type-task: #3b9ad9;
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23667085' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5'/%3E%3C/svg%3E");
 }
 
@@ -106,7 +109,7 @@ button.link:hover { text-decoration: underline; background: none; }
   display: flex; align-items: center; gap: 14px;
   padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
 }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; color: inherit; text-decoration: none; }
 .repo-picker { display: flex; gap: 8px; align-items: center; }
 .git-chip { font-size: 12.5px; color: var(--muted); background: var(--surface-2); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
 .git-chip .dirty { color: var(--p-high); }
@@ -279,3 +282,71 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: 
 .card:hover .copy-btn, .card:focus-within .copy-btn, .row:hover .copy-btn, .row:focus-within .copy-btn, .card .copy-btn:focus-visible, .row .copy-btn:focus-visible { opacity: 1; }
 .card-top { justify-content: flex-start; }
 .card-top .badge { margin-left: auto; }
+
+a.issue-ref { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
+a.issue-ref:hover { text-decoration: underline; }
+/* A preview link (`KEY: title`): a light grey outline that turns blue on hover, without an underline. */
+a.issue-preview { border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+a.issue-preview:hover { border-color: var(--accent); text-decoration: none; }
+ul.plain { list-style: none; padding: 0; margin: 0 0 12px; }
+
+/* An issue on its own page: two cards, the content and a side panel, under a plain header. */
+.drawer.issue-page {
+  position: static; width: min(1080px, 100% - 32px); margin: 16px auto; border: 0; background: transparent;
+  box-shadow: none; z-index: auto;
+}
+.drawer.issue-page .drawer-header { padding-left: 2px; padding-right: 2px; }
+
+.contents { display: contents; }
+/* Issue page: description on the left, status, priority, epic and labels in a side card. */
+.drawer.issue-page .drawer-body { overflow: visible; padding: 14px 0 0; }
+.page-body { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+.page-main, .page-side { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.page-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.page-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.page-side .drawer-footer { border-top: 1px solid var(--border); padding-top: 12px; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .page-body { grid-template-columns: 1fr; }
+}
+
+/* Fields that read as text and become dropdowns when clicked. */
+.page-side .fields { display: flex; flex-direction: column; gap: 8px; }
+.field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.field-label { font-size: 12.5px; color: var(--muted); }
+.field-value, .field-select { width: 100%; min-width: 0; box-sizing: border-box; text-align: left; padding: 6px 8px; border-radius: 6px; }
+.field-value { border: 1px solid transparent; background: transparent; color: var(--text); overflow-wrap: anywhere; }
+.field-value:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border); }
+.chip.add-chip { border: 1px dashed var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+.chip.add-chip:hover { background: var(--surface-2); color: var(--text); }
+
+/* The ⋯ actions menu in the issue header. */
+
+.action-menu { position: relative; }
+.action-menu .menu {
+  position: absolute; right: 0; top: calc(100% + 4px); min-width: 170px; z-index: 30; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / 18%); padding: 4px;
+}
+.action-menu .menu button { border: 0; background: transparent; text-align: left; padding: 7px 10px; border-radius: 6px; }
+.action-menu .menu button:hover { background: var(--surface-2); }
+.action-menu .menu button.danger-text { color: var(--danger); }
+.action-menu > button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; }
+.action-menu > button svg { display: block; }
+
+/* The child issues of an epic as a table; the columns come from the repository config. */
+.children-scroll { overflow-x: auto; }
+.children-table { table-layout: fixed; min-width: 100%; border-collapse: collapse; font-size: 14px; }
+.children-table th { position: relative; text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 4px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; }
+.children-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow: hidden; text-overflow: ellipsis; }
+.children-table td.col-title { overflow-wrap: anywhere; }
+.children-table td:not(.col-title) { white-space: nowrap; }
+.children-table tr:last-child td { border-bottom: 0; }
+.children-table tbody tr:hover td { background: var(--surface-2); }
+.children-table .chip-row { display: flex; gap: 4px; overflow: hidden; }
+.chip.nowrap { white-space: nowrap; }
+.col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; cursor: col-resize; touch-action: none; user-select: none; }
+.col-resizer::after { content: ''; position: absolute; top: 4px; bottom: 4px; right: 3px; width: 2px; border-radius: 1px; background: transparent; }
+.children-table th:hover .col-resizer::after, .col-resizer:active::after { background: var(--accent); }
+
+/* A child's title links to its page; it keeps the text colour and only gains an underline on hover. */
+a.child-title { color: inherit; text-decoration: none; cursor: pointer; }
+a.child-title:hover { color: inherit; text-decoration: underline; }
