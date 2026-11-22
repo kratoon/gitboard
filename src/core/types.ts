@@ -285,7 +285,7 @@ export interface ChecklistItem {
 
 export interface Issue {
   id: string;
-  /** Human-friendly reference: `KEY-<shortest unique prefix, min 7>`. */
+  /** The issue key shown to people: `KEY-<shortest unique prefix, min 7>`. Named `ref` in the API. */
   ref: string;
   title: string;
   status: string;

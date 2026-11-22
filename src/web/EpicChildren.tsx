@@ -2,7 +2,7 @@ import { useState, type PointerEvent, type ReactNode } from 'react';
 import type { Column, EpicChild, EpicColumnId } from '../core/types';
 import { LinkedText, internalClick, useLinks } from './links';
 
-const LABELS: Record<EpicColumnId, string> = { ref: 'Reference', title: 'Title', status: 'Status', priority: 'Priority', labels: 'Labels' };
+const LABELS: Record<EpicColumnId, string> = { ref: 'Ref', title: 'Title', status: 'Status', priority: 'Priority', labels: 'Labels' };
 const DEFAULT_WIDTH: Record<EpicColumnId, number> = { ref: 130, title: 340, status: 140, priority: 100, labels: 200 };
 const MIN_WIDTH = 60;
 const storageKey = (id: EpicColumnId) => `gitboard.epicColumn.${id}`;

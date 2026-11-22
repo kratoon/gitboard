@@ -183,7 +183,7 @@ export function App() {
     return () => window.clearTimeout(handle);
   }, [repo?.id, ready, board?.project.key, filters, filtersActive, tick, fail]);
 
-  // Issue references found in text link only when they match an issue of this repository.
+  // Issue keys found in text link only when they match an issue of this repository.
   const links = useMemo<Links | null>(() => {
     if (!repo || !boards) return null;
     const issues = new Map<string, Array<{ id: string; ref: string; title: string }>>();

@@ -6,7 +6,7 @@ import { normalizeMarkdown } from './markdown-normalize';
 
 /**
  * Issue content is untrusted (ADR-b9d4018): raw HTML is never rendered (react-markdown ignores it) and the
- * output is sanitised as well. Links open in a new tab without leaking the opener or referrer. Issue references
+ * output is sanitised as well. Links open in a new tab without leaking the opener or referrer. Issue keys
  * that match an issue in this repository become `REF: title` links to its page, which opens inside the app (FEAT-130c757).
  */
 export function Markdown({ source }: { source: string }) {

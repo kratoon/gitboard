@@ -5,7 +5,7 @@ export function generateId(): string {
   return runtime().randomBytes(6).toString('hex');
 }
 
-/** Shortest unique prefix length (minimum 7) for every id, used for display references (ADR-18de7e0). */
+/** Shortest unique prefix length (minimum 7) for every id, used for display issue keys (ADR-18de7e0). */
 export function shortPrefixLengths(ids: string[]): Map<string, number> {
   const sorted = [...ids].sort();
   const lengths = new Map<string, number>();

@@ -1,19 +1,19 @@
 import { createContext, useContext, type MouseEvent, type ReactNode } from 'react';
 import type { Navigate } from './route';
 
-/** An issue reference such as `FEAT-6930f51`: a project key, a dash and 7 to 12 hex characters of the issue id. */
+/** An issue key such as `FEAT-6930f51`: a project key, a dash and 7 to 12 hex characters of the issue id. */
 const REF_PATTERN = /\b([A-Z][A-Z0-9]{1,9})-([0-9a-f]{7,12})\b/g;
 
-/** An issue found for a reference in text. */
+/** An issue found for an issue key in text. */
 export interface ResolvedRef {
   path: string;
-  /** The canonical reference. */
+  /** The canonical issue key. */
   ref: string;
   title: string;
 }
 
 export interface Links {
-  /** The issue a reference in text points to, or null when no issue in this repository matches. */
+  /** The issue an issue key in text points to, or null when no issue in this repository matches. */
   resolve: (ref: string) => ResolvedRef | null;
   navigate: Navigate;
 }
@@ -35,7 +35,7 @@ export function internalClick(links: Links, path: string) {
   };
 }
 
-/** Text with every resolvable issue reference replaced by a link that previews it as `REF: title`. */
+/** Text with every resolvable issue key replaced by a link that previews it as `KEY: title`. */
 export function LinkedText({ text }: { text: string }): ReactNode {
   const links = useLinks();
   if (!links) return text;
@@ -72,7 +72,7 @@ interface MdNode {
 }
 const SKIP = new Set(['link', 'linkReference', 'inlineCode', 'code', 'html', 'image', 'imageReference']);
 
-/** A remark plugin that turns issue references in Markdown text into preview links (never inside code or existing links). */
+/** A remark plugin that turns issue keys in Markdown text into preview links (never inside code or existing links). */
 export function remarkIssueRefs(options: { resolve: (ref: string) => ResolvedRef | null }) {
   const visit = (node: MdNode) => {
     if (!node.children || SKIP.has(node.type)) return;

@@ -65,7 +65,7 @@ function Row({
       }}
     >
       <span className="ref">{issue.ref}</span>
-      <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
+      <CopyButton value={issue.ref} label={`Copy issue key ${issue.ref}`} />
       <span className="row-title"><LinkedText text={issue.title} /></span>
       <span className="row-meta">
         {epicTitle && <span className="chip epic" title="Epic">{epicTitle}</span>}

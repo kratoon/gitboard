@@ -212,7 +212,7 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
         ) : (
           <span className="ref">{issue.ref}</span>
         )}
-        <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
+        <CopyButton value={issue.ref} label={`Copy issue key ${issue.ref}`} />
         <span className={`chip ${issue.type === 'epic' ? 'epic' : ''}`}>{issue.type}</span>
         <span className="spacer" />
         <ActionMenu actions={[{ label: 'Delete issue…', danger: true, onSelect: () => setConfirmDelete(true) }]} />

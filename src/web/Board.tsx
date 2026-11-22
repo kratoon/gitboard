@@ -23,7 +23,7 @@ function CardBody({ issue, epicTitle }: { issue: Issue; epicTitle: string | unde
     <>
       <div className="card-top">
         <span className="ref">{issue.ref}</span>
-        <CopyButton value={issue.ref} label={`Copy reference ${issue.ref}`} />
+        <CopyButton value={issue.ref} label={`Copy issue key ${issue.ref}`} />
         {issue.priority && <span className={`badge priority-${issue.priority}`}>{issue.priority}</span>}
       </div>
       <div className="card-title"><LinkedText text={issue.title} /></div>

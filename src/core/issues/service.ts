@@ -1,5 +1,5 @@
 /**
- * Issue business rules: projects, statuses, parents, ordering and references. Every operation here is
+ * Issue business rules: projects, statuses, parents, ordering and issue keys. Every operation here is
  * the single implementation used by the CLI, the HTTP server and tests (ADR-9b13ab6).
  */
 import { GitboardError } from '../errors';
@@ -110,7 +110,7 @@ function progressFor(snap: Snapshot, epic: StoredIssue): EpicProgress {
 }
 
 // ---------------------------------------------------------------------------------------------
-// References (ADR-18de7e0)
+// Issue keys (ADR-18de7e0)
 // ---------------------------------------------------------------------------------------------
 
 const REF_WITH_KEY = /^([A-Z][A-Z0-9]{1,9})-([0-9a-f]{4,12})$/;
@@ -120,18 +120,18 @@ function resolveRef(snap: Snapshot, ref: string, ctx: ServiceContext): StoredIss
   const withKey = REF_WITH_KEY.exec(ref);
   const prefix = withKey ? (withKey[2] ?? '') : ref.toLowerCase();
   if (!withKey && !REF_BARE.test(prefix)) {
-    throw new GitboardError('INVALID_INPUT', `Invalid issue reference "${ref}". Use a short id (a3f91c2), KEY-shortid (AUTH-a3f91c2) or the full 12-character id.`);
+    throw new GitboardError('INVALID_INPUT', `Invalid issue key "${ref}". Use a short id (a3f91c2), KEY-shortid (AUTH-a3f91c2) or the full 12-character id.`);
   }
   const matches = snap.issues.filter((issue) => issue.id.startsWith(prefix));
   if (matches.length === 0) throw new GitboardError('ISSUE_NOT_FOUND', `Issue not found: ${ref}`);
   if (matches.length > 1) {
     const refs = matches.map((m) => toIssue(m, snap.lengths).ref).join(', ');
-    throw new GitboardError('AMBIGUOUS_ID', `Reference "${ref}" matches ${matches.length} issues (${refs}). Use more characters.`);
+    throw new GitboardError('AMBIGUOUS_ID', `Issue key "${ref}" matches ${matches.length} issues (${refs}). Use more characters.`);
   }
   const found = matches[0] as StoredIssue;
   const key = withKey?.[1];
   if (key !== undefined && key !== found.fm.project) {
-    ctx.warn(`Reference ${ref} names project ${key}, but the issue is in project ${found.fm.project}. Resolved by id.`);
+    ctx.warn(`Issue key ${ref} names project ${key}, but the issue is in project ${found.fm.project}. Resolved by id.`);
   }
   return found;
 }
@@ -180,7 +180,7 @@ export async function listIssues(repo: Repo, filter: IssueListInput = {}, ctx: S
     if (parentId !== undefined && fm.parent !== parentId) return false;
     if (label !== undefined && !fm.labels.some((l) => l.toLowerCase() === label)) return false;
     if (query) {
-      // `KEY-id` lets a reference of any short length (KEY-6930f51) match, and the key alone matches too.
+      // `KEY-id` lets an issue key of any short length (KEY-6930f51) match, and the project key alone matches too.
       const haystack = `${fm.title}\n${issue.body}\n${issue.id}\n${fm.project}-${issue.id}`.toLowerCase();
       if (!haystack.includes(query)) return false;
     }

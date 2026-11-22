@@ -35,20 +35,20 @@ Commit the `.gitboard/` directory to share the board. Gitboard never commits, pu
 ## Concepts
 
 These are the terms Gitboard uses in the CLI, the web UI, the config and the docs. Please use them as written.
-In particular, **key always means a project key**; the identifier of an issue is its **reference**.
+Two keys exist, so never say just "key": the **project key** (`AUTH`) names a project and the **issue key** (`AUTH-a3f91c2`) names one issue, as in Jira. **Ref** is the short form of issue key.
 
 | Term | Meaning |
 |---|---|
 | **Repository** | A Git repository registered with Gitboard (`gitboard repo ...`). |
 | **Registry id / name** | How Gitboard identifies a registered repository on this machine: an opaque 8-character id (a hash of its path) and a name (the folder name, or the last part of the clone URL). Local to the machine; not used in web addresses. |
-| **Repository address (slug)** | The portable web address of a repository: `owner/name` from its `origin` URL (`kratoon/gitboard`), prefixed with the provider (`github/kratoon/gitboard`) only when two registered repositories would otherwise clash. A repository with no `origin` uses the `id` set in `.gitboard/config.yaml`, else `local/<registry id>`. Issue pages live at `/repos/<slug>/issues/<reference>`. |
+| **Repository address (slug)** | The portable web address of a repository: `owner/name` from its `origin` URL (`kratoon/gitboard`), prefixed with the provider (`github/kratoon/gitboard`) only when two registered repositories would otherwise clash. A repository with no `origin` uses the `id` set in `.gitboard/config.yaml`, else `local/<registry id>`. Issue pages live at `/repos/<slug>/issues/<issue key>`. |
 | **Project** | A group of issues inside a repository, identified by a project key such as `AUTH` (like a Jira project). Every issue belongs to one. |
-| **Project key** | 2 to 10 characters, an uppercase letter followed by uppercase letters or digits (`AUTH`, `FEAT`). The `key` field in the config, and the `KEY` in CLI help, always mean this. |
+| **Project key** | 2 to 10 characters, an uppercase letter followed by uppercase letters or digits (`AUTH`, `FEAT`). The `key` field of a project in the config, and the `KEY` in CLI help, mean this. |
 | **Issue** | One Markdown file in `.gitboard/issues/`. Has a title, status, priority, labels, a description and an optional checklist. Its type is `story` or `epic`. |
 | **Issue id** | The random 12-character hex id in the issue's front matter and file name. Never changes. |
-| **Short id** | The first characters of an issue id, at least 7, as many as needed to be unique in the repository. |
-| **Reference (ref)** | The human-friendly name of an issue: the project key and its short id, such as `AUTH-a3f91c2`. Shown on cards, copied by the copy button and used in commit messages, links and CLI arguments. The CLI also accepts a bare short id or the full id wherever a reference is expected. |
-| **Preview link** | In the web UI, a reference found in text (a description, a title) that matches an issue in the current repository is shown as `REF: title` and links to that issue's page. References that match nothing stay plain text. |
+| **Short id** | The first characters of an issue id, at least 7, as many as needed to be unique in the repository. It is the part of an issue key after the dash. |
+| **Issue key (ref)** | The human-friendly name of an issue: the project key and its short id, such as `AUTH-a3f91c2`. **Ref** is the short name for the same thing, used where space is tight and in machine-readable places: the `ref` field in JSON output, the `ref` epic column and its "Ref" header. Shown on cards, copied by the copy button and used in commit messages, links and CLI arguments. The CLI also accepts a bare short id or the full id wherever an issue key is expected. |
+| **Preview link** | In the web UI, an issue key found in text (a description, a title) that matches an issue in the current repository is shown as `KEY: title` and links to that issue's page. Issue keys that match nothing stay plain text. |
 | **Epic** | An issue with `type: epic` that groups stories. A story links to it with `parent`. One level, same project. |
 | **Story** | An issue with `type: story`, the default. |
 | **Child issue** | A story whose `parent` is an epic. An epic's detail lists them in a table. |
@@ -277,11 +277,11 @@ gitboard issue create "Title" --project ADR --status proposed --body-file decisi
 gitboard issue move <ref> accepted      # or superseded / rejected (say which ADR replaces it in the body)
 ```
 
-Reference decisions by their Gitboard reference (`ADR-9b13ab6`) in code comments, pull requests and other ADRs.
+Reference decisions by their Gitboard issue key (`ADR-9b13ab6`) in code comments, pull requests and other ADRs.
 
 Open questions and other work are issues in the `FEAT` project (columns `todo`, `in-progress`, `done`).
 Questions carry the label `question` (and `deferred` while parked). They have no numbers of their own: refer to
-one by its Gitboard reference (for example `FEAT-85a6d2c`). A reference never changes unless another issue's
+one by its Gitboard issue key (for example `FEAT-85a6d2c`). An issue key never changes unless another issue's
 id starts with the same 7 characters, in which case Gitboard asks for more; the full id always works.
 
 ```bash
