@@ -26,7 +26,7 @@ const LinksContext = createContext<Links | null>(null);
 export const LinksProvider = LinksContext.Provider;
 export const useLinks = () => useContext(LinksContext);
 
-/** Preview links get a border in the colour of the issue's type (epic purple, story green). */
+/** Preview links are outlined; the issue type is a class so type icons and colours can build on it (FEAT-4073a22). */
 export const previewClass = (found: ResolvedRef) => `issue-ref issue-preview issue-type-${found.type}`;
 
 /** `FEAT-6930f51: Open an issue on its own page` */

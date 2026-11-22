@@ -285,11 +285,9 @@ h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: 
 
 a.issue-ref { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
 a.issue-ref:hover { text-decoration: underline; }
-/* A preview link (`KEY: title`) is outlined in the colour of the issue's type. */
+/* A preview link (`KEY: title`): a light grey outline that turns blue on hover, without an underline. */
 a.issue-preview { border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
-a.issue-preview.issue-type-epic { border-color: var(--type-epic); }
-a.issue-preview.issue-type-story { border-color: var(--type-story); }
-a.issue-preview.issue-type-task { border-color: var(--type-task); }
+a.issue-preview:hover { border-color: var(--accent); text-decoration: none; }
 ul.plain { list-style: none; padding: 0; margin: 0 0 12px; }
 
 /* An issue on its own page: two cards, the content and a side panel, under a plain header. */
