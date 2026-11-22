@@ -80,7 +80,12 @@ export function EpicChildren({ items, columns, statuses }: { items: EpicChild[];
                 ) : (
                   <span className="ref">{child.ref}</span>
                 ),
-              title: <LinkedText text={child.title} />,
+              title:
+                path !== null && links ? (
+                  <a className="child-title" href={path} onClick={internalClick(links, path)}>{child.title}</a>
+                ) : (
+                  <LinkedText text={child.title} />
+                ),
               status: <span className="chip nowrap">{statuses.find((c) => c.id === child.status)?.name ?? child.status}</span>,
               priority: child.priority ? <span className={`badge priority-${child.priority}`}>{child.priority}</span> : null,
               labels:
