@@ -7,14 +7,14 @@ import { makeRepo, readConfigObject, useTestHome, writeConfigObject } from '../h
 useTestHome();
 
 describe('epic child table columns', () => {
-  it('defaults to key, title, status, then repository, then project', async () => {
+  it('defaults to ref, title, status, then repository, then project', async () => {
     const { repo, root } = await makeRepo();
-    expect((await getBoard(repo))[0]?.epicColumns).toEqual(['key', 'title', 'status']);
+    expect((await getBoard(repo))[0]?.epicColumns).toEqual(['ref', 'title', 'status']);
 
     const config = await readConfigObject(root);
-    config.epicColumns = ['key', 'title', 'priority', 'labels'];
+    config.epicColumns = ['ref', 'title', 'priority', 'labels'];
     await writeConfigObject(root, config);
-    expect((await getBoard(repo))[0]?.epicColumns).toEqual(['key', 'title', 'priority', 'labels']);
+    expect((await getBoard(repo))[0]?.epicColumns).toEqual(['ref', 'title', 'priority', 'labels']);
 
     config.projects[0].epicColumns = ['title', 'status'];
     await writeConfigObject(root, config);
@@ -24,10 +24,10 @@ describe('epic child table columns', () => {
   it('ignores unknown ids and duplicates, and validate reports them', async () => {
     const { repo, root } = await makeRepo();
     const config = await readConfigObject(root);
-    config.epicColumns = ['key', 'owner', 'key', 'status'];
+    config.epicColumns = ['ref', 'owner', 'ref', 'status'];
     config.projects[0].epicColumns = ['owner'];
     await writeConfigObject(root, config);
-    expect(effectiveEpicColumns(config, 'SAMP')).toEqual(['key', 'status']);
+    expect(effectiveEpicColumns(config, 'SAMP')).toEqual(['ref', 'status']);
     const result = await validateRepo(repo);
     expect(result.problems.map((p) => p.code)).toEqual(['UNKNOWN_EPIC_COLUMN', 'UNKNOWN_EPIC_COLUMN']);
     expect(result.problems[0]?.message).toMatch(/owner/);

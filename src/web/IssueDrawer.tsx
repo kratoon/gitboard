@@ -113,12 +113,12 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
   }
 
   const columns = board?.columns ?? [];
-  const epicColumns: EpicColumnId[] = board?.epicColumns ?? ['key', 'title', 'status'];
+  const epicColumns: EpicColumnId[] = board?.epicColumns ?? ['ref', 'title', 'status'];
   const statusKnown = columns.some((c) => c.id === issue.status);
   const epics = (board?.epics ?? []).filter((e) => e.id !== issue.id);
   const editing = draft !== null;
-  const pagePath = links?.resolve(issue.ref) ?? null;
-  const parentPath = issue.parentIssue ? (links?.resolve(issue.parentIssue.ref) ?? null) : null;
+  const pagePath = links?.resolve(issue.ref)?.path ?? null;
+  const parentPath = issue.parentIssue ? (links?.resolve(issue.parentIssue.ref)?.path ?? null) : null;
 
   const statusOptions = [
     ...(statusKnown ? [] : [{ value: issue.status, label: `${issue.status} (unknown)` }]),
@@ -202,13 +202,13 @@ export function IssueDrawer({ variant = 'drawer', repoId, issueId, board, tick, 
       <header className="drawer-header">
         {issue.parentIssue &&
           (parentPath !== null && links ? (
-            <a className="ref issue-key" href={parentPath} title={issue.parentIssue.title} onClick={internalClick(links, parentPath)}>{issue.parentIssue.ref}</a>
+            <a className="ref issue-ref" href={parentPath} title={issue.parentIssue.title} onClick={internalClick(links, parentPath)}>{issue.parentIssue.ref}</a>
           ) : (
             <span className="ref" title={issue.parentIssue.title}>{issue.parentIssue.ref}</span>
           ))}
         {issue.parentIssue && <span className="ref" aria-hidden="true">/</span>}
         {!page && pagePath !== null && links ? (
-          <a className="ref issue-key" href={pagePath} title="Open this issue on its own page" onClick={internalClick(links, pagePath)}>{issue.ref}</a>
+          <a className="ref issue-ref" href={pagePath} title="Open this issue on its own page" onClick={internalClick(links, pagePath)}>{issue.ref}</a>
         ) : (
           <span className="ref">{issue.ref}</span>
         )}

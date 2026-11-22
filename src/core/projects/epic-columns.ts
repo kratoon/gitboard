@@ -4,7 +4,7 @@
  */
 import { EPIC_COLUMN_IDS, type EpicColumnId, type RepoConfig } from '../types';
 
-export const BUILTIN_EPIC_COLUMNS: readonly EpicColumnId[] = ['key', 'title', 'status'];
+export const BUILTIN_EPIC_COLUMNS: readonly EpicColumnId[] = ['ref', 'title', 'status'];
 
 export function isEpicColumnId(value: string): value is EpicColumnId {
   return (EPIC_COLUMN_IDS as readonly string[]).includes(value);

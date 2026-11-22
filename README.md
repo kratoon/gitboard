@@ -34,14 +34,28 @@ Commit the `.gitboard/` directory to share the board. Gitboard never commits, pu
 
 ## Concepts
 
+These are the terms Gitboard uses in the CLI, the web UI, the config and the docs. Please use them as written.
+In particular, **key always means a project key**; the identifier of an issue is its **reference**.
+
 | Term | Meaning |
 |---|---|
 | **Repository** | A Git repository registered with Gitboard (`gitboard repo ...`). |
-| **Project** | A group of issues inside a repository, identified by a key such as `AUTH` (like a Jira project). Every issue belongs to one. |
+| **Registry id / name** | How Gitboard identifies a registered repository on this machine: an opaque 8-character id (a hash of its path) and a name (the folder name, or the last part of the clone URL). Local to the machine; not used in web addresses. |
+| **Repository address (slug)** | The portable web address of a repository: `owner/name` from its `origin` URL (`kratoon/gitboard`), prefixed with the provider (`github/kratoon/gitboard`) only when two registered repositories would otherwise clash. A repository with no `origin` uses the `id` set in `.gitboard/config.yaml`, else `local/<registry id>`. Issue pages live at `/repos/<slug>/issues/<reference>`. |
+| **Project** | A group of issues inside a repository, identified by a project key such as `AUTH` (like a Jira project). Every issue belongs to one. |
+| **Project key** | 2 to 10 characters, an uppercase letter followed by uppercase letters or digits (`AUTH`, `FEAT`). The `key` field in the config, and the `KEY` in CLI help, always mean this. |
+| **Issue** | One Markdown file in `.gitboard/issues/`. Has a title, status, priority, labels, a description and an optional checklist. Its type is `story` or `epic`. |
+| **Issue id** | The random 12-character hex id in the issue's front matter and file name. Never changes. |
+| **Short id** | The first characters of an issue id, at least 7, as many as needed to be unique in the repository. |
+| **Reference (ref)** | The human-friendly name of an issue: the project key and its short id, such as `AUTH-a3f91c2`. Shown on cards, copied by the copy button and used in commit messages, links and CLI arguments. The CLI also accepts a bare short id or the full id wherever a reference is expected. |
+| **Preview link** | In the web UI, a reference found in text (a description, a title) that matches an issue in the current repository is shown as `REF: title` and links to that issue's page. References that match nothing stay plain text. |
 | **Epic** | An issue with `type: epic` that groups stories. A story links to it with `parent`. One level, same project. |
+| **Story** | An issue with `type: story`, the default. |
+| **Child issue** | A story whose `parent` is an epic. An epic's detail lists them in a table. |
+| **Epic columns** | The columns of that table, from the `epicColumns` list in the config: `ref`, `title`, `status`, `priority`, `labels`. |
 | **Status / column** | Where an issue is on the board. Defaults to `todo`, `in-progress`, `done`; overridable per repository and per project. Each column can be flagged **done** (finished work). |
 | **View** | A way to look at a project's issues: `kanban` (the board) or `backlog` (open work as a list). Which views are offered is configurable per repository and per project. |
-| **Reference** | `KEY-<short id>` such as `AUTH-a3f91c2`, a short id prefix, or the full 12-character id. |
+| **Drawer / issue page** | The two places an issue is shown in the web UI: the side panel next to the board, and the issue's own full page. Both show the same content. |
 
 ## Running the web UI
 
@@ -153,7 +167,7 @@ columns:
   - id: done
     done: true            # finished work
 views: [kanban, backlog]  # the views offered; the first is the default
-epicColumns: [key, title, status]  # columns of an epic's child-issue table
+epicColumns: [ref, title, status]  # columns of an epic's child-issue table
 projects:
   - key: WEB
     name: Website
@@ -174,8 +188,8 @@ the layer below. A column can carry `done: true` to mark finished work: the back
 progress counts them. If no column says anything, the last one is done. Views are configured the same way with a
 `views` list (`kanban`, `backlog`; the first is the default); the built-in default offers both. Your last choice
 of view is remembered in the browser, not in the repository. The child issues in an epic's detail are shown as a
-table whose columns come from an `epicColumns` list (`key`, `title`, `status`, `priority`, `labels`), resolved
-project, then repository, then the built-in `key, title, status`; edit the config file to change it.
+table whose columns come from an `epicColumns` list (`ref`, `title`, `status`, `priority`, `labels`), resolved
+project, then repository, then the built-in `ref, title, status`; edit the config file to change it.
 
 Updates keep the file's format, and YAML comments and layout are preserved. `gitboard config convert` switches a
 repository to the other format (`--to json`, or `--to yaml` which is the default); comments do not survive a

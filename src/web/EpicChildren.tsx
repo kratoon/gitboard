@@ -2,8 +2,8 @@ import { useState, type PointerEvent, type ReactNode } from 'react';
 import type { Column, EpicChild, EpicColumnId } from '../core/types';
 import { LinkedText, internalClick, useLinks } from './links';
 
-const LABELS: Record<EpicColumnId, string> = { key: 'Key', title: 'Title', status: 'Status', priority: 'Priority', labels: 'Labels' };
-const DEFAULT_WIDTH: Record<EpicColumnId, number> = { key: 120, title: 340, status: 140, priority: 100, labels: 200 };
+const LABELS: Record<EpicColumnId, string> = { ref: 'Reference', title: 'Title', status: 'Status', priority: 'Priority', labels: 'Labels' };
+const DEFAULT_WIDTH: Record<EpicColumnId, number> = { ref: 130, title: 340, status: 140, priority: 100, labels: 200 };
 const MIN_WIDTH = 60;
 const storageKey = (id: EpicColumnId) => `gitboard.epicColumn.${id}`;
 
@@ -72,11 +72,11 @@ export function EpicChildren({ items, columns, statuses }: { items: EpicChild[];
         </thead>
         <tbody>
           {items.map((child) => {
-            const path = links?.resolve(child.ref) ?? null;
+            const path = links?.resolve(child.ref)?.path ?? null;
             const cell: Record<EpicColumnId, ReactNode> = {
-              key:
+              ref:
                 path !== null && links ? (
-                  <a className="ref issue-key" href={path} onClick={internalClick(links, path)}>{child.ref}</a>
+                  <a className="ref issue-ref" href={path} onClick={internalClick(links, path)}>{child.ref}</a>
                 ) : (
                   <span className="ref">{child.ref}</span>
                 ),

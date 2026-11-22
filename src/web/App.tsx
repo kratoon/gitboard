@@ -183,20 +183,20 @@ export function App() {
     return () => window.clearTimeout(handle);
   }, [repo?.id, ready, board?.project.key, filters, filtersActive, tick, fail]);
 
-  // Issue keys found in text link only when they match an issue of this repository.
+  // Issue references found in text link only when they match an issue of this repository.
   const links = useMemo<Links | null>(() => {
     if (!repo || !boards) return null;
-    const issues = new Map<string, Array<{ id: string; ref: string }>>();
+    const issues = new Map<string, Array<{ id: string; ref: string; title: string }>>();
     for (const b of boards) {
       const all = [...b.columns.flatMap((c) => c.issues), ...b.epics];
-      issues.set(b.project.key, all.map((i) => ({ id: i.id, ref: i.ref })));
+      issues.set(b.project.key, all.map((i) => ({ id: i.id, ref: i.ref, title: i.title })));
     }
     return {
       navigate,
-      resolve: (key) => {
-        const dash = key.indexOf('-');
-        const found = issues.get(key.slice(0, dash))?.find((i) => i.id.startsWith(key.slice(dash + 1)));
-        return found ? issuePath(repo.slug, found.ref) : null;
+      resolve: (text) => {
+        const dash = text.indexOf('-');
+        const found = issues.get(text.slice(0, dash))?.find((i) => i.id.startsWith(text.slice(dash + 1)));
+        return found ? { path: issuePath(repo.slug, found.ref), ref: found.ref, title: found.title } : null;
       },
     };
   }, [repo, boards, navigate]);

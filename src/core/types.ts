@@ -62,7 +62,7 @@ export const ViewIdSchema = z.enum(VIEW_IDS);
 export const StoredViewsSchema = z.array(z.string().min(1)).min(1, 'at least one view is required');
 
 /** Columns of the child-issue table in an epic's detail (FEAT-130c757). */
-export const EPIC_COLUMN_IDS = ['key', 'title', 'status', 'priority', 'labels'] as const;
+export const EPIC_COLUMN_IDS = ['ref', 'title', 'status', 'priority', 'labels'] as const;
 export type EpicColumnId = (typeof EPIC_COLUMN_IDS)[number];
 export const StoredEpicColumnsSchema = z.array(z.string().min(1)).min(1, 'at least one epic column is required');
 
